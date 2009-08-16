@@ -172,16 +172,15 @@ public:
     void get_candidates_for_cache();
     
     bool prepare_page(int page_no);
-
-
-private:
     // After the user chooses a candidate, input method will do a
     // re-decoding and give the new candidate list.
     // If candidate id is less than 0, means user is inputting Pinyin,
     // not selecting any choice.
-    void choose_candidate(int index);
-    void update_for_search(int n_candidates);
+    void choose_decoding_candidate(int index);
     void choose_predict_choice(int choice);
+
+private:
+    void update_for_search(int n_candidates);
     /**
      * the length of m_surface
      */

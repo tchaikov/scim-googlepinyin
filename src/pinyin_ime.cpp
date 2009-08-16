@@ -1,7 +1,11 @@
 #define Uses_SCIM_EVENT
+#define Uses_SCIM_IMENGINE
 #include <scim.h>
 #include "pinyin_decoder_service.h"
 #include "pinyin_ime.h"
+#include "candidate_view.h"
+#include "composing_view.h"
+#include "pinyin_util.h"
 
 using namespace scim;
 
@@ -16,7 +20,7 @@ PinyinIME::process_in_chinese(const KeyEvent& key)
     case ImeState::STATE_PREDICT:
         return process_state_predict(key);
     case ImeState::STATE_COMPOSING:
-        return process_state_composing(key);
+        return process_state_edit_composing(key);
     default:
         return false;
     }
@@ -52,26 +56,27 @@ PinyinIME::process_state_input(const KeyEvent& key)
                            ch, true);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
-        return m_im_engine->caret_left();
+        return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Right) {
-        return m_im_engine->caret->right();
+        return m_cand_view->cursor_right();
     } else if (key.code == SCIM_KEY_Up) {
-        if (!m_im_engine->lookup_cursor_up()) {
-            m_im_engine->enable_active_high_light(false);
-            m_im_engine->set_ime_state(STATE_COMPOSING);
-            m_im_engine->update_composing_text();
+        if (!m_cand_view->page_up()) {
+            m_cand_view->enable_active_high_light(false);
+            change_to_state_composing(true);
+            update_composing_text(true);
         }
     } else if (key.code == SCIM_KEY_Down) {
-        return m_im_engine->lookup_cursor_down();
+        return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;
-        if (active_pos < m_lookup_table->get_current_page_size()) {
-            active_pos += m_lookup_table->get_current_page_start();
+        const int current_page = m_cand_view->get_current_page();
+        if (active_pos < m_dec_info.get_current_page_size(current_page)) {
+            active_pos += m_dec_info.get_current_page_start(current_page);
             choose_and_update(active_pos);
         }
         return true;
     } else if (key.code == SCIM_KEY_Return) {
-        m_im_engine->commit_string(m_dec_info->get_original_spl_str());
+        commit_result_text(str2wstr(m_dec_info.get_original_spl_str()));
         reset_to_idle_state();
         return true;
     } else if (key.code == SCIM_KEY_space) {
@@ -90,29 +95,30 @@ PinyinIME::process_state_predict(const KeyEvent& key)
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z') {
         change_to_state_input(true);
-        mDecInfo.add_spl_char(ch, true);
+        m_dec_info.add_spl_char(ch, true);
         choose_and_update(-1);
     } else if (ch == ',' || ch == '.' ) {
         input_comma_period(m_dec_info.get_current_full_sent(m_candidate_index),
                            ch, true);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
-        return m_im_engine->caret_left();
+        return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Right) {
-        return m_im_engine->caret->right();
+        return m_cand_view->cursor_right();
     } else if (key.code == SCIM_KEY_Up) {
-        m_im_engine->lookup_cursor_up();
+        m_cand_view->page_up();
     } else if (key.code == SCIM_KEY_Down) {
-        return m_im_engine->lookup_cursor_down();
+        return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;
-        if (active_pos < m_lookup_table->get_current_page_size()) {
-            active_pos += m_lookup_table->get_current_page_start();
+        const int current_page = m_cand_view->get_current_page();
+        if (active_pos < m_dec_info.get_current_page_size(current_page)) {
+            active_pos += m_dec_info.get_current_page_start(current_page);
             choose_and_update(active_pos);
         }
         return true;
     } else if (key.code == SCIM_KEY_Return) {
-        m_im_engine->commit_string(L"\n");
+        commit_result_text(L"\n");
         reset_to_idle_state();
         return true;
     } else if (key.code == SCIM_KEY_space) {
@@ -135,8 +141,8 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
         m_dec_info.move_cursor(1);
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
-        if (m_cmps_status == SHOW_STRING_LOWERCASE) {
-            commit_result_text(m_dec_info.get_original_spl_str());
+        if (m_cmps_view->get_status() == ComposingView::SHOW_STRING_LOWERCASE) {
+            commit_result_text(str2wstr(m_dec_info.get_original_spl_str()));
         } else {
             commit_result_text(m_dec_info.get_composing_str());
         }
@@ -156,21 +162,28 @@ PinyinIME::process_surface_change(const KeyEvent& key)
     
     if ((ch >= 'a' && ch <= 'z') ||
         (ch == '\'' && !m_dec_info.char_before_cursor_is_separator()) ||
-        (((ch >= '0' && keyChar <= '9') || keyChar == ' ') && m_ime_state == STATE_COMPOSING)) {
+        ( ((ch >= '0' && ch <= '9') || ch == ' ') &&
+          m_ime_state == ImeState::STATE_COMPOSING)) {
         m_dec_info.add_spl_char(ch, false);
         choose_and_update(-1);
     } else if (key.code == SCIM_KEY_Delete) {
         m_dec_info.prepare_delete_before_cursor();
         choose_and_update(-1);
-    } else if (key.code == SCIM_KEY_Return) {
-        
+    }
+    
     return true;
+}
+
+void
+PinyinIME::commit_result_text(const wstring& result_text)
+{
+    // TODO
 }
 
 void
 PinyinIME::choose_and_update(int index)
 {
-    if (m_ime_state != STATE_PREDICT) {
+    if (m_ime_state != ImeState::STATE_PREDICT) {
         // Get result candidate list, if choice_id < 0, do a new decoding.
         // If choice_id >=0, select the candidate, and get the new candidate
         // list.
@@ -182,19 +195,31 @@ PinyinIME::choose_and_update(int index)
 
     if (!m_dec_info.get_composing_str().empty()) {
         WideString result_str = m_dec_info.get_composing_str_active_part();
-        if (m_ime_state == STATE_IDLE) {
+        if (m_ime_state == ImeState::STATE_IDLE) {
             if (m_dec_info.get_spl_str_decoded_len() == 0) {
-                m_ime_state = STATE_COMPOSING;
+                m_ime_state = ImeState::STATE_COMPOSING;
             } else {
-                m_ime_state = STATE_INPUT;
+                m_ime_state = ImeState::STATE_INPUT;
             }
         } else {
             if (m_dec_info.selection_finished()) {
-                m_ime_state = STATE_COMPOSING;
+                m_ime_state = ImeState::STATE_COMPOSING;
             }
         }
-        m_im_engine->show_lookup_table();
+        m_cand_view->show_lookup_table();
     } else {
         reset();
     }
 }
+
+void
+PinyinIME::choose_candidate(int cand_no)
+{
+    if (cand_no < 0) {
+        cand_no = m_cand_view->get_active_candidate_pos();
+    }
+    if (cand_no >= 0) {
+        choose_and_update(cand_no);
+    }
+}
+

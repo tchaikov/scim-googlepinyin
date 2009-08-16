@@ -1,11 +1,12 @@
 #include "decoding_info.h"
 
 class PinyinDecoderService;
-class IMEngineInstanceBase;
+class CandidateView;
+class ComposingView;
+
 namespace scim {
     struct KeyEvent;
 }
-
 using scim::KeyEvent;
 
 /**
@@ -14,8 +15,11 @@ using scim::KeyEvent;
 class PinyinIME
 {
     PinyinDecoderService* m_decoder_service;
+    DecodingInfo m_dec_info;
     ImeState::State m_ime_state;
-    IMEngineInstanceBase *m_im_engine;
+    CandidateView *m_cand_view;
+    ComposingView *m_cmps_view;
+    
     /**
      * the absolute offset of candidate
      */
@@ -29,7 +33,8 @@ private:
     bool process_state_idle(const KeyEvent& key);
     bool process_state_input(const KeyEvent& key);
     bool process_state_predict(const KeyEvent& key);
-    bool process_state_composing(const KeyEvent& key);
+    bool process_state_edit_composing(const KeyEvent& key);
+    void choose_candidate(int cand_no);
     void choose_and_update(int index);
     bool process_surface_change(const KeyEvent& key);
 

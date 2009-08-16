@@ -3,14 +3,7 @@
 #include "pinyinime.h"
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
-
-wstring
-str2wstr(const string& str)
-{
-    wstring wstr;
-    copy(str.begin(), str.end(), std::back_inserter(wstr));
-    return wstr;
-}
+#include "pinyin_util.h"
 
 DecodingInfo::DecodingInfo(PinyinDecoderService *decoder_service)
     : m_surface_decoded_len(0), m_pos_del_spl(-1), m_decoder_service(decoder_service)
@@ -177,7 +170,7 @@ DecodingInfo::selection_finished() const
 }
 
 void
-DecodingInfo::choose_candidate(int cand_id)
+DecodingInfo::choose_decoding_candidate(int cand_id)
 {
     if (m_ime_state == ImeState::STATE_PREDICT)
         return;
