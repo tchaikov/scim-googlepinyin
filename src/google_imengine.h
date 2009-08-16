@@ -3,16 +3,17 @@
 
 using namespace scim;
 
+class PinyinDecoderService;
+
 class GooglePyFactory : public IMEngineFactoryBase
 {
-    CGooglepinyinUserData *m_user_data;
-    CGooglepinyinOptions   m_pref;
-    CIMIData            m_pinyin_data;
     ConfigPointer       m_config;
     bool                m_valid;
     WideString          m_name;
     Connection          m_reload_signal_connection;
 
+    PinyinDecoderService *m_decoder_service;
+    
     friend class GooglePyInstance;
     
 public:
@@ -35,9 +36,6 @@ public:
     
 private:
     bool init ();
-    bool load_system_data ();
-    bool load_user_config ();
-    void load_user_data ();
 };
 
 class GooglePyInstance : public IMEngineInstanceBase
@@ -50,8 +48,8 @@ class GooglePyInstance : public IMEngineInstanceBase
     ImeState             m_ime_state;
     
   public:
-    GooglePyInstance(GooglePyFactory *factory, CGooglepinyinUserData *user_data,
-                  const String& encoding, int id);
+    GooglePyInstance(GooglePyFactory *factory, PinyinDecoderService *decoder_service,
+                     const String& encoding, int id);
     virtual ~GooglePyInstance();
     /**
      * - mode switch key

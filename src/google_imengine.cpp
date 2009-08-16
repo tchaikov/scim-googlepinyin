@@ -20,34 +20,26 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <imi_options.h>
-#include <imi_view.h>
-#include <ic_history.h>
-
 #include <scim.h>
 
-#include "imi_scimwin.h"
-#include "sunpinyin_utils.h"
-#include "sunpinyin_keycode.h"
-#include "sunpinyin_lookup_table.h"
-#include "sunpinyin_imengine.h"
-#include "sunpinyin_imengine_config_keys.h"
-#include "sunpinyin_private.h"
+#include "google_keycode.h"
+#include "pinyin_lookup_table.h"
+#include "google_imengine.h"
 
-#define SCIM_PROP_STATUS                  "/IMEngine/SunPinyin/Status"
-#define SCIM_PROP_LETTER                  "/IMEngine/SunPinyin/Letter"
-#define SCIM_PROP_PUNCT                   "/IMEngine/SunPinyin/Punct"
+#define SCIM_PROP_STATUS                  "/IMEngine/GooglePinyin/Status"
+#define SCIM_PROP_LETTER                  "/IMEngine/GooglePinyin/Letter"
+#define SCIM_PROP_PUNCT                   "/IMEngine/GooglePinyin/Punct"
 
-#ifndef SCIM_SUNPINYIN_DATADIR
-    #define SCIM_SUNPINYIN_DATADIR            "/usr/share/scim/sunpinyin"
+#ifndef SCIM_GOOGLEPINYIN_DATADIR
+    #define SCIM_GOOGLEPINYIN_DATADIR            "/usr/share/scim/googlepinyin"
 #endif
 
 #ifndef SCIM_ICONDIR
     #define SCIM_ICONDIR                      "/usr/share/scim/icons"
 #endif
 
-#ifndef SCIM_SUNPINYIN_ICON_FILE
-    #define SCIM_SUNPINYIN_ICON_FILE       (SCIM_ICONDIR "/sunpinyin_logo.xpm")
+#ifndef SCIM_GOOGLEPINYIN_ICON_FILE
+    #define SCIM_GOOGLEPINYIN_ICON_FILE       (SCIM_ICONDIR "/googlepinyin_logo.xpm")
 #endif
 
 #define SCIM_FULL_LETTER_ICON              (SCIM_ICONDIR "/full-letter.png")
@@ -56,76 +48,6 @@
 #define SCIM_HALF_PUNCT_ICON               (SCIM_ICONDIR "/half-punct.png")
 
 using namespace scim;
-
-class CSunpinyinUserData
-{
-    CBigramHistory         m_history;
-    String                 m_history_path;
-    String                 m_user_data_directory;
-    
-public:    
-    CSunpinyinUserData() {
-        m_user_data_directory = String(scim_get_home_dir () +
-                                       String (SCIM_PATH_DELIM_STRING) +
-                                       String (".scim") + 
-                                       String (SCIM_PATH_DELIM_STRING) +
-                                       String ("sunpinyin"));
-        m_history_path        = String(m_user_data_directory +
-                                       String (SCIM_PATH_DELIM_STRING) +
-                                       String ("sunpinyin_history"));
-    }
-    
-    CBigramHistory* get_history() {
-        return &m_history;
-    }
-    
-    bool save_history() {
-        // ignore the return value, since m_history_path can be out of
-        // m_user_data_directory
-        SCIM_DEBUG_IMENGINE (3) << "save_history()\n";
-        
-        create_directory_if_necessary(m_user_data_directory);
-        
-        bool suc = false;
-        size_t sz = 0;
-        void* buf = NULL;
-        if (m_history.bufferize(&buf, &sz) && buf) {
-            FILE* fp = fopen (m_history_path.c_str(), "wb");
-            if (fp) {
-                suc = (fwrite(buf, 1, sz, fp) == sz);
-                fclose(fp);
-            }
-            free(buf);
-        }
-        return suc;
-    }
-    
-    bool load_history() {
-        bool suc = false;
-        FILE* fp = fopen(m_history_path.c_str(), "rb");
-        if (fp) {
-            struct stat info;
-            fstat(fileno(fp), &info);
-            void* buf = malloc(info.st_size);
-            if (buf) {
-                fread(buf, info.st_size, 1, fp);
-                suc = m_history.loadFromBuffer(buf, info.st_size);
-                free(buf);
-            }
-            fclose(fp);
-        }
-        return suc;
-    }
-    
-    bool create_directory_if_necessary(const String& directory) {
-        if (access (directory.c_str (), R_OK | W_OK)) {
-            mkdir (directory.c_str (), S_IRUSR | S_IWUSR | S_IXUSR);
-            if (access (directory.c_str (), R_OK | W_OK))
-                return false;
-        }
-        return true;
-    }
-};
 
 static IMEngineFactoryPointer _scim_pinyin_factory (0); 
 
@@ -139,7 +61,7 @@ extern "C" {
     void scim_module_init (void)
     {
         SCIM_DEBUG_IMENGINE (3) << "scim_module_init\n";
-        bindtextdomain (GETTEXT_PACKAGE, SCIM_SUNPINYIN_LOCALEDIR);
+        bindtextdomain (GETTEXT_PACKAGE, SCIM_GOOGLEPINYIN_LOCALEDIR);
         bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     }
 
@@ -172,7 +94,7 @@ extern "C" {
         SCIM_DEBUG_IMENGINE (3) << "entering scim_imengine_module_create_factory()\n";
         if (engine != 0) return IMEngineFactoryPointer (0);
         if (_scim_pinyin_factory.null ()) {
-            SunPyFactory *factory = new SunPyFactory (_scim_config); 
+            GooglePyFactory *factory = new GooglePyFactory (_scim_config); 
             if (factory->valid ())
                 _scim_pinyin_factory = factory;
             else
@@ -182,159 +104,67 @@ extern "C" {
     }
 }
 
-// implementation of SunPyFactory
-SunPyFactory::SunPyFactory (const ConfigPointer &config)
+// implementation of GooglePyFactory
+GooglePyFactory::GooglePyFactory (const ConfigPointer &config)
     : m_user_data(0),
       m_config (config),
       m_valid (false)
 {
-    SCIM_DEBUG_IMENGINE (3) << "SunPyFactory()\n";
+    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory()\n";
     set_languages ("zh_CN");
-    m_name = utf8_mbstowcs ("SunPinyin");
-    m_user_data = new CSunpinyinUserData;
+    m_name = utf8_mbstowcs ("GooglePinyin");
+    m_decoder_service = new PinyinDecoderService()
     m_valid = load_system_data() && init ();
-    m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &SunPyFactory::reload_config));
+    m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &GooglePyFactory::reload_config));
 }
 
 bool
-SunPyFactory::init ()
+GooglePyFactory::init ()
 {
-    bool valid = true;
-    
-    if (m_config) {
-        valid = load_user_config();
-    }
-    
-    // postpone the load_user_data() to the ctor of SunPyInstance
-    return valid;
+    String sys_dict_path =  String(SCIM_GOOGLEPINYIN_DATADIR) +
+                            String(SCIM_PATH_DELIM_STRING) +
+                            String("py_dict.dat");
+    String user_data_directory = String(scim_get_home_dir () +
+                                        String (SCIM_PATH_DELIM_STRING) +
+                                        String (".scim") + 
+                                        String (SCIM_PATH_DELIM_STRING) +
+                                        String ("google"));
+    String usr_dict_path = String(user_data_directory +
+                                  String(SCIM_PATH_DELIM_STRING) +
+                                  String("usr_dict.dat"));
+    m_decoder_service = PinyinDecoderService(sys_dict_path,
+                                             usr_dict_path);
+    return m_decoder_service.is_initialized();
 }
 
-bool
-SunPyFactory::load_user_config()
+GooglePyFactory::~GooglePyFactory ()
 {
-    // Load configurations.
-    m_pref.m_ViewType =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_VIEW_TYPE),
-                        0);
-    m_pref.m_GBK =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_CHARHSET),
-                        1);
-    m_pref.m_MinusAsPageUp =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_PAGE_MINUS),
-                            true);
-    m_pref.m_BracketAsPageUp =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_PAGE_BRACKET),
-                        true);
-    m_pref.m_CommaAsPageUp =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_PAGE_COMMA),
-                        false);
-    m_pref.m_MemoryPower =
-            m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_MEMORY_POWER),
-                            5);
-    m_pref.m_ContextRanking =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_CONTEXT_METHOD),
-                        true);
-    m_pref.m_LayoutVeritcal =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_USER_LAYOUT_VERTICAL),
-                        0);
-        
-    // Read ambiguities config.
-    m_pref.m_Fuzzy =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_ANY),
-                        0);
-    m_pref.m_Fuzzy_zh =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_ChiCi),
-                        0);
-    m_pref.m_Fuzzy_ch =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_ChiCi),
-                        0);
-    m_pref.m_Fuzzy_sh =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_ShiSi),
-                        0);
-    m_pref.m_Fuzzy_ln =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_NeLe),
-                        0);
-    m_pref.m_Fuzzy_fh =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_FoHe),
-                        0);
-    m_pref.m_Fuzzy_ang =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_AnAng),
-                            0);
-    m_pref.m_Fuzzy_eng =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_EnEng),
-                        0);
-    m_pref.m_Fuzzy_ing =
-        m_config->read (String (SCIM_CONFIG_IMENGINE_SUNPINYIN_AMBIGUITY_InIng),
-                        0);        
-    // Adjust configurations
-    if (m_pref.m_MemoryPower > 10)
-        m_pref.m_MemoryPower = 10;
-    
-    return true;
-}
-
-//
-// the IME wrapper may have the reference of CThreadSlm* or CPinyinTrie* from
-// m_pinyin_data, so, before calling (re)loadResouce() the wrapper should ensure
-// that the reference hold by CIMIContext is released. destroy_session() will do
-// it.  Currently, we will *ONLY* load_system_data() once after an instance of
-// SunPyFactory is created
-//
-bool
-SunPyFactory::load_system_data () {
-    // system wide data
-    const String lm_path        (String(SCIM_SUNPINYIN_DATADIR) +
-                                 String(SCIM_PATH_DELIM_STRING) +
-                                 String("lm_sc.t3g"));
-    const String py_trie_path   (String(SCIM_SUNPINYIN_DATADIR) +
-                                 String(SCIM_PATH_DELIM_STRING) +
-                                 String("pydict_sc.bin"));
-    
-    bool valid = m_pinyin_data.loadResource(lm_path.c_str(), py_trie_path.c_str());;
-
-    if (!valid) {
-        SCIM_DEBUG_IMENGINE (1) << "System Pinyin data (" <<
-            lm_path << ", " << py_trie_path << ") load failed!\n";
-    }
-    return valid;
-}
-
-void
-SunPyFactory::load_user_data () {
-    m_user_data->load_history();
-}
-
-SunPyFactory::~SunPyFactory ()
-{
-    SCIM_DEBUG_IMENGINE (3) << "~SunPyFactory()\n";
-    if (m_valid)
-        m_user_data->save_history();
+    SCIM_DEBUG_IMENGINE (3) << "~GooglePyFactory()\n";
     m_reload_signal_connection.disconnect ();
-    delete m_user_data;
 }
 
 WideString
-SunPyFactory::get_name () const
+GooglePyFactory::get_name () const
 {
     return m_name;
 }
 
 WideString
-SunPyFactory::get_authors () const
+GooglePyFactory::get_authors () const
 {
     return utf8_mbstowcs (
                 String (_("Lei Zhang, <Phill.Zhang@sun.com>; Shuguagn Yan, <Ervin.Yan@sun.com>")));
 }
 
 WideString
-SunPyFactory::get_credits () const
+GooglePyFactory::get_credits () const
 {
     return utf8_mbstowcs (
         String (_("Ported by Kov Chai, <tchaikov@gmail.com>")));
 }
 
 WideString
-SunPyFactory::get_help () const
+GooglePyFactory::get_help () const
 {
     String help =
         String (_("Hot Keys:"
@@ -354,66 +184,56 @@ SunPyFactory::get_help () const
 }
 
 String
-SunPyFactory::get_uuid () const
+GooglePyFactory::get_uuid () const
 {
-    return String ("dabc0d83-013f-4fb3-b65f-a0fe0dc9a964");
+    return String ("f15ec6e9-cdd2-4506-a354-0d4b3d329956");
 }
 
 String
-SunPyFactory::get_icon_file () const
+GooglePyFactory::get_icon_file () const
 {
-    return String (SCIM_SUNPINYIN_ICON_FILE);
+    return String (SCIM_GOOGLEPINYIN_ICON_FILE);
 }
 
 IMEngineInstancePointer
-SunPyFactory::create_instance (const String& encoding, int id)
+GooglePyFactory::create_instance (const String& encoding, int id)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  "SunPyFactory::create_instance(" << id << ")\n";    
-    return new SunPyInstance (this, m_user_data, encoding, id);
+    SCIM_DEBUG_IMENGINE (3) <<  "GooglePyFactory::create_instance(" << id << ")\n";    
+    return new GooglePyInstance (this, m_decoder_service, encoding, id);
 }
 
 void
-SunPyFactory::reload_config (const ConfigPointer &config)
+GooglePyFactory::reload_config (const ConfigPointer &config)
 {
     m_config = config;
-    m_valid = init ();
-    m_user_data->load_history();
 }
 
-// implementation of SunPyInstance
-SunPyInstance::SunPyInstance (SunPyFactory *factory,
-                              CSunpinyinUserData *user_data,
-                              const String& encoding,
-                              int id)
+// implementation of GooglePyInstance
+GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
+                                    PinyinDecoderService *decoder_service,
+                                    const String& encoding,
+                                    int id)
     : IMEngineInstanceBase (factory, encoding, id),
       m_factory (factory),
-      m_pinyin_data (&factory->m_pinyin_data),
-      m_user_data (user_data),
-      m_pref (&factory->m_pref),
-      m_ic (0),
-      m_pv (0),
-      m_wh (0),
+      m_decoder_service(decoder_service),
       m_lookup_table (0),
       m_focused (false)
 {
-    SCIM_DEBUG_IMENGINE (3) << get_id() << ": SunPyInstance()\n";
+    SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
     create_session(m_pref, m_pinyin_data, m_user_data->get_history());
-    m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &SunPyInstance::reload_config));
-    m_user_data->load_history();
+    m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
-    m_pv->updateWindows(m_pv->clearIC());
 }
 
-SunPyInstance::~SunPyInstance ()
+GooglePyInstance::~GooglePyInstance ()
 {
-    SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": ~SunPyInstance()\n";
-    m_user_data->save_history();
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": ~GooglePyInstance()\n";
     m_reload_signal_connection.disconnect ();
     destroy_session();
 }
 
 bool
-SunPyInstance::process_key_event (const KeyEvent& key)
+GooglePyInstance::process_key_event (const KeyEvent& key)
 {
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": process_key_event(" << m_focused << ", "  <<
         key.code << ", " <<
@@ -431,7 +251,7 @@ SunPyInstance::process_key_event (const KeyEvent& key)
 }
 
 bool
-SunPyInstance::try_process_key(const SunKeyEvent& key)
+GooglePyInstance::try_process_key(const GoogleKeyEvent& key)
 {
     if (m_pref->isPageUpKey(key.code, key.value, key.modifier)) {
         lookup_page_up ();
@@ -452,36 +272,9 @@ GooglePyInstance::process_state_predict(const KeyEvent& key)
 bool
 GooglePyInstance::process_state_input(const KeyEvent& key)
 {
-    char ch = key.get_ascii_code();
-    if (ch >= 'a' && ch <= 'z' ||
-        ch == '\'' && !m_dec_info.char_before_cursor_is_separator() ||
-        key.code == SCIM_KEY_Delete) {
-        return process_surface_change(key);
-    }
-    else if (ch == ',' || ch == '.' ) {
-        commit_string(m_dec_info.get_current_full_sent());
-    }
-}
 
-bool
-GooglePyInstance::process_surface_change(const KeyEvent& key)
-{
-    if (m_dec_info.is_spl_str_full() && key.code != SCIM_KEY_Delete) {
-        return true;
-    }
-    char ch = key.get_ascii_code();
-    
-    if ((ch >= 'a' && ch <= 'z') ||
-        (ch == '\'' && !m_dec_info.char_before_cursor_is_separator()) ||
-        (((ch >= '0' && keyChar <= '9') || keyChar == ' ') m_ime_state == STATE_COMPOSING)) {
-        m_dec_info.add_spl_char(ch, false);
-        choose_and_update(-1);
-    } else if (key.code == SCIM_KEY_Delete) {
-        m_dec_info.prepare_delete_before_cursor();
-        choose_and_update(-1);
-    }
-    return true;
-}
+
+
 
 void input_comma_period(WideString pre_edit, char ch)
 {}
@@ -537,14 +330,14 @@ GooglePyInstance::choose_and_update(int index)
 }
 
 void
-SunPyInstance::select_candidate (unsigned int item)
+GooglePyInstance::select_candidate (unsigned int item)
 {
     m_pv->onCandidateSelectRequest(item);
 //  m_pv->makeSelection(item);
 }
 
 void
-SunPyInstance::update_lookup_table_page_size (unsigned int page_size)
+GooglePyInstance::update_lookup_table_page_size (unsigned int page_size)
 {
     if (page_size > 0) {
         SCIM_DEBUG_IMENGINE (3) << ": update_lookup_table_page_size(" << page_size << ")\n";
@@ -554,7 +347,7 @@ SunPyInstance::update_lookup_table_page_size (unsigned int page_size)
 }
 
 void
-SunPyInstance::lookup_table_page_up ()
+GooglePyInstance::lookup_table_page_up ()
 {
     // XXX, it would be great, if View class expose a page_up() method
 //    m_pv->onKeyEvent(IM_VK_PAGE_UP, 0, 0);
@@ -565,21 +358,21 @@ SunPyInstance::lookup_table_page_up ()
 }
 
 void
-SunPyInstance::lookup_page_up()
+GooglePyInstance::lookup_page_up()
 {
     m_lookup_table->page_up();
     //    m_lookup_table->set_page_size(m_pv->s_CandiWindowSize);
 }
 
 void
-SunPyInstance::lookup_page_down()
+GooglePyInstance::lookup_page_down()
 {
     m_lookup_table->page_down();
     //    m_lookup_table->set_page_size(m_pv->s_CandiWindowSize);
 }
 
 void
-SunPyInstance::lookup_table_page_down ()
+GooglePyInstance::lookup_table_page_down ()
 {
     // XXX, it would be great, if View class expose a page_up() method
     //    m_pv->onKeyEvent(IM_VK_PAGE_DOWN, 0, 0);
@@ -590,12 +383,12 @@ SunPyInstance::lookup_table_page_down ()
 }
 
 void
-SunPyInstance::move_preedit_caret (unsigned int /*pos*/)
+GooglePyInstance::move_preedit_caret (unsigned int /*pos*/)
 {
 }
 
 void
-SunPyInstance::reset ()
+GooglePyInstance::reset ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reset()\n";
 
@@ -611,7 +404,7 @@ SunPyInstance::reset ()
 }
 
 void
-SunPyInstance::focus_in ()
+GooglePyInstance::focus_in ()
 {
     SCIM_DEBUG_IMENGINE(3) << get_id() << ": focus_in ()\n";
     m_focused = true;
@@ -623,8 +416,8 @@ SunPyInstance::focus_in ()
     
     init_lookup_table_labels ();
     
-    CSunpinyinOptions* pref =
-        dynamic_cast<CSunpinyinOptions*>( m_pv->getPreference() );
+    CGooglepinyinOptions* pref =
+        dynamic_cast<CGooglepinyinOptions*>( m_pv->getPreference() );
 
     if ( (m_pref->m_GBK != pref->m_GBK && get_encoding() != "GB2312") ||
          m_pref->m_ViewType != pref->m_ViewType ) {
@@ -643,14 +436,14 @@ SunPyInstance::focus_in ()
 }
 
 void
-SunPyInstance::focus_out ()
+GooglePyInstance::focus_out ()
 {
     SCIM_DEBUG_IMENGINE(3) << get_id() << ": focus_out ()\n";
     m_focused = false;
 }
 
 void
-SunPyInstance::trigger_property (const String &property)
+GooglePyInstance::trigger_property (const String &property)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": trigger_property(" << property << ")\n";
     
@@ -668,7 +461,7 @@ SunPyInstance::trigger_property (const String &property)
 
 
 void
-SunPyInstance::init_lookup_table_labels ()
+GooglePyInstance::init_lookup_table_labels ()
 {
     m_pv->s_CandiWindowSize = 10;
 
@@ -677,7 +470,7 @@ SunPyInstance::init_lookup_table_labels ()
 }
 
 void
-SunPyInstance::initialize_all_properties ()
+GooglePyInstance::initialize_all_properties ()
 {
     PropertyList proplist;
 
@@ -690,7 +483,7 @@ SunPyInstance::initialize_all_properties ()
 }
 
 void
-SunPyInstance::refresh_all_properties ()
+GooglePyInstance::refresh_all_properties ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_all_properties()\n";
     m_wh->updateStatus(CIMIWinHandler::STATUS_ID_CN,
@@ -703,7 +496,7 @@ SunPyInstance::refresh_all_properties ()
 
 
 void
-SunPyInstance::refresh_status_property(bool cn)
+GooglePyInstance::refresh_status_property(bool cn)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_status_property(" << cn << ")\n";
     if (!cn) {
@@ -714,7 +507,7 @@ SunPyInstance::refresh_status_property(bool cn)
 }
 
 void
-SunPyInstance::refresh_fullsimbol_property(bool full)
+GooglePyInstance::refresh_fullsimbol_property(bool full)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_fullsimbol_property(" << full << ")\n";
     _letter_property.set_icon(
@@ -723,7 +516,7 @@ SunPyInstance::refresh_fullsimbol_property(bool full)
 }
 
 void
-SunPyInstance::refresh_fullpunc_property(bool full)
+GooglePyInstance::refresh_fullpunc_property(bool full)
 {
     _punct_property.set_icon(
         full ? SCIM_FULL_PUNCT_ICON : SCIM_HALF_PUNCT_ICON);
@@ -731,7 +524,7 @@ SunPyInstance::refresh_fullpunc_property(bool full)
 }
 
 bool
-SunPyInstance::try_switch_cn(const KeyEvent& key)
+GooglePyInstance::try_switch_cn(const KeyEvent& key)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": try_switch_cn(" << key.code << ")\n";
     if (key.code == SCIM_KEY_KP_Space && key.is_shift_down()) {
@@ -743,7 +536,7 @@ SunPyInstance::try_switch_cn(const KeyEvent& key)
 }
 
 void
-SunPyInstance::create_session(CSunpinyinOptions* pref,
+GooglePyInstance::create_session(CGooglepinyinOptions* pref,
                               CIMIData* pinyin_data,
                               CBigramHistory* history)
 {
@@ -764,7 +557,7 @@ SunPyInstance::create_session(CSunpinyinOptions* pref,
     pv->attachWinHandler(m_wh);
     pv->attachIC(ic);
 
-    SunLookupTable* lookup_table = new SunLookupTable();
+    GoogleLookupTable* lookup_table = new GoogleLookupTable();
     
     CScimWinHandler* wh = new CScimWinHandler(this, lookup_table);
     wh->setOptions(pv->getPreference());
@@ -776,7 +569,7 @@ SunPyInstance::create_session(CSunpinyinOptions* pref,
 }
 
 void
-SunPyInstance::destroy_session()
+GooglePyInstance::destroy_session()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() <<  ": destroy_session()\n";
     
@@ -793,7 +586,7 @@ SunPyInstance::destroy_session()
 }
 
 AttributeList
-SunPyInstance::build_preedit_attribs (const IPreeditString* ppd)
+GooglePyInstance::build_preedit_attribs (const IPreeditString* ppd)
 {
     AttributeList attrs;
     const int sz = ppd->charTypeSize();
@@ -821,7 +614,7 @@ SunPyInstance::build_preedit_attribs (const IPreeditString* ppd)
 }
 
 void
-SunPyInstance::redraw_preedit_string (const IPreeditString* ppd)
+GooglePyInstance::redraw_preedit_string (const IPreeditString* ppd)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() <<  ": redraw_preedit_string()\n";
     if (ppd->size() != 0) {
@@ -841,7 +634,7 @@ SunPyInstance::redraw_preedit_string (const IPreeditString* ppd)
 }
 
 void
-SunPyInstance::redraw_lookup_table(const ICandidateList* pcl)
+GooglePyInstance::redraw_lookup_table(const ICandidateList* pcl)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": redraw_lookup_table()\n";
     SCIM_DEBUG_IMENGINE (3) << "page size = " << m_pv->s_CandiWindowSize << "\n";
@@ -856,7 +649,7 @@ SunPyInstance::redraw_lookup_table(const ICandidateList* pcl)
 }
 
 void
-SunPyInstance::reload_config(const ConfigPointer &config)
+GooglePyInstance::reload_config(const ConfigPointer &config)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reload_config()\n";
     reset();

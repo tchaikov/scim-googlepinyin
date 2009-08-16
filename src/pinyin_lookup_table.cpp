@@ -49,7 +49,7 @@ AttributeList
 PinyinLookupTable::get_attributes (int index) const
 {
     SCIM_DEBUG_IMENGINE (2) << __PRETTY_FUNCTION__ << index << "!\n";
-    // TODO
+    // TODO: see CandidateView.onDraw()
     return AttributeList();
 }
 

@@ -3,10 +3,11 @@
 
 #include "pinyinime.h"
 
-#include "pinyin_decoder_service.h"
 
 using std::string;
 using std::wstring;
+
+class PinyinDecoderService;
 
 enum ImeState {
     STATE_BYPASS, STATE_IDLE, STATE_INPUT, STATE_COMPOSING, STATE_PREDICT,
@@ -81,7 +82,7 @@ class DecodingInfo
     /**
      * wrapper for Pinyin-to-Hanzi decoding engine
      */
-    PinyinDecoderService m_pinyin_decode_service;
+    PinyinDecoderService *m_decoder_service;
     
     /**
      * Editing cursor in mSurface.
@@ -130,8 +131,9 @@ class DecodingInfo
     ImeState m_ime_state;
     
 public:
-    DecodingInfo();
+    DecodingInfo(PinyinDecoderService *);
     DecodingInfo(const DecodingInfo&);
+    
     void reset();
 
     bool is_spl_str_full() const;
@@ -171,7 +173,6 @@ public:
     
     bool prepare_page(int page_no);
 
-    size_t get_candidates_number() const;
 
 private:
     // After the user chooses a candidate, input method will do a
@@ -185,5 +186,29 @@ private:
      * the length of m_surface
      */
     int length() const;
-};
 
+public:
+    /* page table */
+    size_t get_candidates_number() const;
+    void update_page(int page_no);
+    /* XXX: should be get_page_size */
+    size_t get_current_page_size(int current_page) const;
+    size_t get_current_page_start(int current_page) const;
+    bool page_forwardable(int current_page) const;
+    bool page_backwardable(int current_page) const;
+    bool page_ready(int page_no) const;
+    
+public:
+    /* cursor */
+    /**
+     * move cursor to previous or next pinyin boundary
+     */
+    void move_cursor(int offset);
+    void move_cursor_to_edge(bool left);
+    /* for building AttributeList */
+    int get_cursor_pos_in_cmps_display() const;
+    bool char_before_cursor_is_separator() const;
+    
+private:
+    int get_cursor_pos_in_cmps() const;
+};
