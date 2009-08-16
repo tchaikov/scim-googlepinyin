@@ -1,19 +1,21 @@
-#define Uses_SCIM_IMENGINE
-
+#define Uses_SCIM_EVENT
 #include <scim.h>
 #include "pinyin_decoder_service.h"
+#include "pinyin_ime.h"
+
+using namespace scim;
 
 bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
 {
     switch (m_ime_state) {
-    case STATE_IDLE:
+    case ImeState::STATE_IDLE:
         return process_state_idle(key);
-    case STATE_INPUT:
+    case ImeState::STATE_INPUT:
         return process_state_input(key);
-    case STATE_PREDICT:
+    case ImeState::STATE_PREDICT:
         return process_state_predict(key);
-    case STATE_COMPOSING:
+    case ImeState::STATE_COMPOSING:
         return process_state_composing(key);
     default:
         return false;
@@ -165,7 +167,7 @@ PinyinIME::process_surface_change(const KeyEvent& key)
     return true;
 }
 
-bool
+void
 PinyinIME::choose_and_update(int index)
 {
     if (m_ime_state != STATE_PREDICT) {

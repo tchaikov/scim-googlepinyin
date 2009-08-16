@@ -1,17 +1,17 @@
 #include <vector>
 #include <string>
 
-#include "pinyinime.h"
-
 
 using std::string;
 using std::wstring;
 
 class PinyinDecoderService;
 
-enum ImeState {
-    STATE_BYPASS, STATE_IDLE, STATE_INPUT, STATE_COMPOSING, STATE_PREDICT,
-    STATE_APP_COMPLETION
+struct ImeState {
+    enum State {
+        STATE_BYPASS, STATE_IDLE, STATE_INPUT, STATE_COMPOSING, STATE_PREDICT,
+        STATE_APP_COMPLETION
+    };
 };
 
 class DecodingInfo
@@ -128,7 +128,7 @@ class DecodingInfo
      */
     bool m_is_pos_in_spl;;
     
-    ImeState m_ime_state;
+    ImeState::State m_ime_state;
     
 public:
     DecodingInfo(PinyinDecoderService *);

@@ -1,6 +1,12 @@
+#include "decoding_info.h"
+
 class PinyinDecoderService;
 class IMEngineInstanceBase;
-class KeyEvent;
+namespace scim {
+    struct KeyEvent;
+}
+
+using scim::KeyEvent;
 
 /**
  * Main class of the Pinyin input method.
@@ -8,7 +14,7 @@ class KeyEvent;
 class PinyinIME
 {
     PinyinDecoderService* m_decoder_service;
-    ImeState m_ime_state;
+    ImeState::State m_ime_state;
     IMEngineInstanceBase *m_im_engine;
     /**
      * the absolute offset of candidate
@@ -24,7 +30,7 @@ private:
     bool process_state_input(const KeyEvent& key);
     bool process_state_predict(const KeyEvent& key);
     bool process_state_composing(const KeyEvent& key);
-    bool choose_and_update(int index);
+    void choose_and_update(int index);
     bool process_surface_change(const KeyEvent& key);
 
     void change_to_state_composing(bool update_ui);

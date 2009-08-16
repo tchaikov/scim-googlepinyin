@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "pinyinime.h"
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
 
@@ -178,7 +179,7 @@ DecodingInfo::selection_finished() const
 void
 DecodingInfo::choose_candidate(int cand_id)
 {
-    if (m_ime_state == STATE_PREDICT)
+    if (m_ime_state == ImeState::STATE_PREDICT)
         return;
     
     reset_candidates();
@@ -191,7 +192,7 @@ DecodingInfo::choose_candidate(int cand_id)
                 n_candidates = m_decoder_service->search(m_surface);
             } else {
                 bool clear_fixed_this_step = true;
-                if (m_ime_state == STATE_COMPOSING) {
+                if (m_ime_state == ImeState::STATE_COMPOSING) {
                     clear_fixed_this_step = false;
                 }
                 n_candidates = m_decoder_service->del_search(
@@ -313,7 +314,7 @@ DecodingInfo::prepare_page(int page_no)
 void
 DecodingInfo::choose_predict_choice(int choice)
 {
-    if (m_ime_state != STATE_PREDICT ||
+    if (m_ime_state != ImeState::STATE_PREDICT ||
         choice < 0 ||
         choice >= m_total_choices_num) {
         return;
@@ -363,12 +364,12 @@ DecodingInfo::get_candidates_for_cache()
     }
 
     list<wstring> new_list;
-    if (STATE_INPUT == m_ime_state ||
-        STATE_IDLE == m_ime_state ||
-        STATE_COMPOSING == m_ime_state) {
+    if (ImeState::STATE_INPUT == m_ime_state ||
+        ImeState::STATE_IDLE == m_ime_state ||
+        ImeState::STATE_COMPOSING == m_ime_state) {
         new_list = m_decoder_service->get_choice_list(
             fetch_start, fetch_size, m_fixed_len);
-    } else if (STATE_PREDICT == m_ime_state) {
+    } else if (ImeState::STATE_PREDICT == m_ime_state) {
         new_list = m_decoder_service->get_predict_list(
             fetch_start, fetch_size);
     }
