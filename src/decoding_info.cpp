@@ -3,6 +3,7 @@
 #include "pinyinime.h"
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
+#include "candidate_view.h"
 #include "pinyin_util.h"
 
 DecodingInfo::DecodingInfo(PinyinDecoderService *decoder_service)
@@ -139,7 +140,7 @@ DecodingInfo::reset_candidates()
 
 // XXX: this is a part of page_table
 void
-DecodingInfo::update_page(int page_no)
+DecodingInfo::calculate_page(int page_no, CandidateView* cand_view)
 {
     int from_page = m_page_start.size() - 1;
     if (m_page_start.size() > page_no - 1)
@@ -151,6 +152,9 @@ DecodingInfo::update_page(int page_no)
         int p_start = m_page_start[p];
         int p_size = 0;
         while (p_start + p_size < cand_size && p_size < MAX_PAGE_SIZE_DISPLAY) {
+            const int item_pos = p_start + p_size;
+            const wstring& item_str = m_candidates_list[item_pos];
+            cand_view->append_candidate(item_str);
             p_size++;
         }
         m_page_start.push_back(p_start + p_size);

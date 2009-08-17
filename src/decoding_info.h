@@ -1,3 +1,6 @@
+#ifndef DECODING_INFO_H
+#define DECODING_INFO_H
+
 #include <vector>
 #include <string>
 
@@ -6,6 +9,7 @@ using std::string;
 using std::wstring;
 
 class PinyinDecoderService;
+class CandidateView;
 
 struct ImeState {
     enum State {
@@ -189,7 +193,7 @@ private:
 public:
     /* page table */
     size_t get_candidates_number() const;
-    void update_page(int page_no);
+    void calculate_page(int page_no, CandidateView*);
     /* XXX: should be get_page_size */
     size_t get_current_page_size(int current_page) const;
     size_t get_current_page_start(int current_page) const;
@@ -211,3 +215,5 @@ public:
 private:
     int get_cursor_pos_in_cmps() const;
 };
+
+#endif // DECODING_INFO_H

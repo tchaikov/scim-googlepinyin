@@ -1,3 +1,6 @@
+#ifndef PINYIN_DECODER_SERVICE
+#define PINYIN_DECODER_SERVICE
+
 #include <list>
 #include <vector>
 #include <string>
@@ -41,3 +44,5 @@ private:
     string m_sys_dict;
     string m_usr_dict;
 };
+
+#endif // PINYIN_DECODER_SERVICE

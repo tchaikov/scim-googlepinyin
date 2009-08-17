@@ -1,3 +1,6 @@
+#ifndef PINYIN_IME_H
+#define PINYIN_IME_H
+
 #include "decoding_info.h"
 
 class PinyinDecoderService;
@@ -38,6 +41,7 @@ private:
     void choose_and_update(int index);
     bool process_surface_change(const KeyEvent& key);
 
+    void reset_to_idle_state(bool);
     void change_to_state_composing(bool update_ui);
     void change_to_state_input(bool update_ui);
     void commit_result_text(const wstring& result_text);
@@ -49,3 +53,5 @@ private:
     void reset_candidate_window();
     
 };
+
+#endif // PINYIN_IME_H

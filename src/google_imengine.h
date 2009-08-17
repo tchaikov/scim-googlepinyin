@@ -1,8 +1,13 @@
 #ifndef SUNPINYIN_IMENGINE_H
 #define SUNPINYIN_IMENGINE_H
 
+#define Uses_SCIM_IMENGINE
+#define Uses_SCIM_CONFIG_BASE
+#include <scim.h>
+
 using namespace scim;
 
+class PinyinLookupTable;
 class PinyinDecoderService;
 
 class GooglePyFactory : public IMEngineFactoryBase
@@ -41,7 +46,7 @@ private:
 class GooglePyInstance : public IMEngineInstanceBase
 {
     GooglePyFactory        *m_factory;
-    GoogleLookupTable      *m_lookup_table;
+    PinyinLookupTable      *m_lookup_table;
     
     Connection           m_reload_signal_connection;
     bool                 m_focused;
@@ -76,35 +81,22 @@ class GooglePyInstance : public IMEngineInstanceBase
     virtual void trigger_property (const String &property);
 
 public:
-    /**
-     * expose this inherited protected method
-     * so that CScimWinHandler can call it
-     */
     using IMEngineInstanceBase::commit_string;
     
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);
-    void redraw_preedit_string(const IPreeditString* ppd);
-    void redraw_lookup_table(const ICandidateList* pcl);
 
 private:
-    void create_session(CGooglepinyinOptions* pref,
-                        CIMIData* pinyin_data,
-                        CBigramHistory* history);
-    void destroy_session();
-    
     void init_lookup_table_labels ();
     void reload_config (const ConfigPointer &config);
     void refresh_all_properties ();
     void initialize_all_properties();
     
-    AttributeList build_preedit_attribs(const IPreeditString* ppd);
-
-    bool try_switch_style(const GoogleKeyEvent& key);
-    bool try_switch_gbk(const GoogleKeyEvent& key);
-    bool try_switch_cn(const GoogleKeyEvent& key);
-    bool try_process_key(const GoogleKeyEvent& key);
+    bool try_switch_style(const KeyEvent& key);
+    bool try_switch_gbk(const KeyEvent& key);
+    bool try_switch_cn(const KeyEvent& key);
+    bool try_process_key(const KeyEvent& key);
 
     void lookup_page_up();
     void lookup_page_down();

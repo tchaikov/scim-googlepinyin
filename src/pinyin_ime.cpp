@@ -181,6 +181,12 @@ PinyinIME::commit_result_text(const wstring& result_text)
 }
 
 void
+PinyinIME::update_composing_text(bool visible)
+{
+    m_cmps_view->set_visibility(visible);
+}
+
+void
 PinyinIME::choose_and_update(int index)
 {
     if (m_ime_state != ImeState::STATE_PREDICT) {
@@ -197,18 +203,18 @@ PinyinIME::choose_and_update(int index)
         WideString result_str = m_dec_info.get_composing_str_active_part();
         if (m_ime_state == ImeState::STATE_IDLE) {
             if (m_dec_info.get_spl_str_decoded_len() == 0) {
-                m_ime_state = ImeState::STATE_COMPOSING;
+                change_to_state_composing(true);
             } else {
-                m_ime_state = ImeState::STATE_INPUT;
+                change_to_state_input(true);
             }
         } else {
             if (m_dec_info.selection_finished()) {
-                m_ime_state = ImeState::STATE_COMPOSING;
+                change_to_state_composing(true);
             }
         }
-        m_cand_view->show_lookup_table();
+        show_candidate_window(true);
     } else {
-        reset();
+        reset_to_idle_state(false);
     }
 }
 
@@ -221,5 +227,51 @@ PinyinIME::choose_candidate(int cand_no)
     if (cand_no >= 0) {
         choose_and_update(cand_no);
     }
+}
+
+void
+PinyinIME::change_to_state_composing(bool)
+{
+    m_ime_state = ImeState::STATE_COMPOSING;
+}
+
+void
+PinyinIME::reset_to_idle_state(bool)
+{
+    if (ImeState::STATE_IDLE == m_ime_state) return;
+
+    m_ime_state = ImeState::STATE_IDLE;
+    m_dec_info.reset();
+    m_cmps_view->reset();
+    reset_candidate_window();
+}
+
+void
+PinyinIME::change_to_state_input(bool)
+{
+    m_ime_state = ImeState::STATE_INPUT;
+    show_candidate_window(true);
+}
+
+void
+PinyinIME::show_candidate_window(bool show_composing_view)
+{
+    m_cand_view->set_visibility(true);
+    update_composing_text(show_composing_view);
+    m_cand_view->show_candidates(&m_dec_info,
+                                 ImeState::STATE_COMPOSING != m_ime_state);
+}
+
+void
+PinyinIME::dismiss_candidate_window()
+{
+    m_cand_view->set_visibility(false);
+}
+
+void
+PinyinIME::reset_candidate_window()
+{
+    m_dec_info.reset_candidates();
+    show_candidate_window(false);
 }
 

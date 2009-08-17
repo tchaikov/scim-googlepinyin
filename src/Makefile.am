@@ -9,7 +9,9 @@ noinst_LTLIBRARIES = googlepinyin.la
 googlepinyin_la_SOURCES = decoding_info.cpp \
                           pinyin_decoder_service.cpp \
                           pinyin_ime.cpp \
-                          pinyin_lookup_table.cpp
+                          pinyin_lookup_table.cpp \
+                          candidate_view.cpp \
+                          composing_view.cpp
 
 googlepinyin_la_CXXFLAGS = -I$(top_builddir) -I./include \
                            @SCIM_CFLAGS@
