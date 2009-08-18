@@ -61,7 +61,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
         return m_cand_view->cursor_right();
     } else if (key.code == SCIM_KEY_Up) {
         if (!m_cand_view->page_up()) {
-            m_cand_view->enable_active_high_light(false);
+            m_cand_view->enable_active_highlight(false);
             change_to_state_composing(true);
             update_composing_text(true);
         }
@@ -135,10 +135,14 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
         if (!m_dec_info.selection_finished()) {
             change_to_state_input(true);
         }
+    } else if (key.code == SCIM_KEY_Home) {
+        // TODO
+    } else if (key.code == SCIM_KEY_End) {
+        // TODO
     } else if (key.code == SCIM_KEY_Left) {
-        m_dec_info.move_cursor(-1);
+        m_cmps_view->move_cursor(-1);
     } else if (key.code == SCIM_KEY_Right) {
-        m_dec_info.move_cursor(1);
+        m_cmps_view->move_cursor(1);
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
         if (m_cmps_view->get_status() == ComposingView::SHOW_STRING_LOWERCASE) {
@@ -186,6 +190,7 @@ PinyinIME::update_composing_text(bool visible)
     m_cmps_view->set_visibility(visible);
 }
 
+// see PinyinInstance::lookup_select()
 void
 PinyinIME::choose_and_update(int index)
 {

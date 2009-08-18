@@ -1,7 +1,7 @@
 
 #include <cassert>
 #include <vector>
-#include "scim.h"
+#include <scim.h>
 
 #include "decoding_info.h"
 #include "pinyin_lookup_table.h"

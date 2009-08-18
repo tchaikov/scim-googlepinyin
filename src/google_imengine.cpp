@@ -141,6 +141,7 @@ GooglePyFactory::~GooglePyFactory ()
 {
     SCIM_DEBUG_IMENGINE (3) << "~GooglePyFactory()\n";
     m_reload_signal_connection.disconnect ();
+    delete m_decoder_service;
 }
 
 WideString
@@ -153,7 +154,7 @@ WideString
 GooglePyFactory::get_authors () const
 {
     return utf8_mbstowcs (
-                String (_("Lei Zhang, <Phill.Zhang@sun.com>; Shuguagn Yan, <Ervin.Yan@sun.com>")));
+                String (_("Genqing Wu, Xiaotao Duan, Wei Sun")));
 }
 
 WideString
@@ -241,92 +242,31 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
         key.layout << ")\n";
         
     if (!m_focused) return false;
-
-    if (key.is_key_release ())
-        return true;
     
+    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
+        m_forward = !m_forward;
+        refresh_all_properties();
+        reset();
+        return true;
+    }
+
+    if (key.is_key_release ()) return true;
+    
+    if (!m_forward) {
+        if (key.code == SCIM_KEY_Escape && key.mask == 0) {
+            // if get_original_spl_str().empty() return false;
+            reset();
+            return true;
+        }
+        
     return ( try_switch_cn(key) ||
              try_select_candidate(key) ||
              try_process_key(key) );
 }
 
-bool
-GooglePyInstance::try_process_key(const GoogleKeyEvent& key)
+void
+GooglePyInstance::move_preedit_caret (unsigned int /*pos*/)
 {
-    if (m_pref->isPageUpKey(key.code, key.value, key.modifier)) {
-        lookup_page_up ();
-    }
-    else if (m_pref->isPageDnKey(key.code, key.value, key.modifier)) {
-        lookup_page_down ();
-    }
-    
-    return m_pv->onKeyEvent(key.code, key.value, key.modifier);
-}
-
-bool
-GooglePyInstance::process_state_predict(const KeyEvent& key)
-{
-    
-}
-
-bool
-GooglePyInstance::process_state_input(const KeyEvent& key)
-{
-
-
-
-
-void input_comma_period(WideString pre_edit, char ch)
-{}
-
-bool
-GooglePyInstance::try_choose_candidate(const KeyEvent& key)
-{
-    if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9 && key.mask == 0) {
-        int index;
-        if (key.code == SCIM_KEY_0)
-            index = 9;
-        else
-            index = key.code - SCIM_KEY_1;
-        if (index < m_lookup_table->get_current_page_size()) {
-            index += m_lookup_table->get_current_page_start();
-            choose_and_update(index);
-        }
-        return true;
-    }
-    return false;
-}
-
-bool
-GooglePyInstance::choose_and_update(int index)
-{
-    if (m_ime_state != STATE_PREDICT) {
-        // Get result candidate list, if choice_id < 0, do a new decoding.
-        // If choice_id >=0, select the candidate, and get the new candidate
-        // list.
-        m_dec_info.choose_decoding_candidate(index);
-    } else {
-        // Choose a prediction item.
-        m_dec_info.choose_predict_choice(index);
-    }
-
-    if (!m_dec_info.get_composing_str().empty()) {
-        WideString result_str = m_dec_info.get_composing_str_active_part();
-        if (m_ime_state == STATE_IDLE) {
-            if (m_dec_info.get_spl_str_decoded_len() == 0) {
-                m_ime_state = STATE_COMPOSING;
-            } else {
-                m_ime_state = STATE_INPUT;
-            }
-        } else {
-            if (m_dec_info.selection_finished()) {
-                m_ime_state = STATE_COMPOSING;
-            }
-        }
-        show_lookup_table();
-    } else {
-        reset();
-    }
 }
 
 void
@@ -349,53 +289,20 @@ GooglePyInstance::update_lookup_table_page_size (unsigned int page_size)
 void
 GooglePyInstance::lookup_table_page_up ()
 {
-    // XXX, it would be great, if View class expose a page_up() method
-//    m_pv->onKeyEvent(IM_VK_PAGE_UP, 0, 0);
-    // classic View overrides this method
-    // but modern View uses the default dummy implementation
     lookup_page_up();
-    m_pv->onCandidatePageRequest(-1, true);
-}
-
-void
-GooglePyInstance::lookup_page_up()
-{
-    m_lookup_table->page_up();
-    //    m_lookup_table->set_page_size(m_pv->s_CandiWindowSize);
-}
-
-void
-GooglePyInstance::lookup_page_down()
-{
-    m_lookup_table->page_down();
-    //    m_lookup_table->set_page_size(m_pv->s_CandiWindowSize);
 }
 
 void
 GooglePyInstance::lookup_table_page_down ()
 {
-    // XXX, it would be great, if View class expose a page_up() method
-    //    m_pv->onKeyEvent(IM_VK_PAGE_DOWN, 0, 0);
-    // classic View overrides this method
-    // but modern View uses the default dummy implementation
-    lookup_page_down ();
-    m_pv->onCandidatePageRequest(1, true);
 }
 
-void
-GooglePyInstance::move_preedit_caret (unsigned int /*pos*/)
-{
-}
 
 void
 GooglePyInstance::reset ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reset()\n";
-
-    m_ime_state = STATE_IDLE;
-
-    m_lookup_table->clear ();
-    m_dec_info.reset();
+    // m_pinyin_ime->reset_to_idle_state();
     
     hide_lookup_table ();
     hide_preedit_string ();
@@ -412,27 +319,9 @@ GooglePyInstance::focus_in ()
     initialize_all_properties ();
     
     hide_preedit_string ();
-    //hide_aux_string ();
+    hide_aux_string ();
     
     init_lookup_table_labels ();
-    
-    CGooglepinyinOptions* pref =
-        dynamic_cast<CGooglepinyinOptions*>( m_pv->getPreference() );
-
-    if ( (m_pref->m_GBK != pref->m_GBK && get_encoding() != "GB2312") ||
-         m_pref->m_ViewType != pref->m_ViewType ) {
-        destroy_session();
-        // imi_cle hides preedit and candidates
-        create_session(m_pref, m_pinyin_data, m_user_data->get_history());
-    } else {
-        pref->m_MinusAsPageUp   = m_pref->m_MinusAsPageUp;
-        pref->m_CommaAsPageUp   = m_pref->m_CommaAsPageUp;
-        pref->m_BracketAsPageUp = m_pref->m_BracketAsPageUp;
-    }
-    
-    //hide_aux_string ();
-
-    m_pv->updateWindows(CIMIView::PREEDIT_MASK | CIMIView::CANDIDATE_MASK);
 }
 
 void
@@ -463,8 +352,6 @@ GooglePyInstance::trigger_property (const String &property)
 void
 GooglePyInstance::init_lookup_table_labels ()
 {
-    m_pv->s_CandiWindowSize = 10;
-
     m_lookup_table->set_page_size (m_pv->s_CandiWindowSize);
     m_lookup_table->show_cursor ();
 }

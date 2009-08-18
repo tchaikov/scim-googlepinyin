@@ -11,7 +11,8 @@ googlepinyin_la_SOURCES = decoding_info.cpp \
                           pinyin_ime.cpp \
                           pinyin_lookup_table.cpp \
                           candidate_view.cpp \
-                          composing_view.cpp
+                          composing_view.cpp \
+                          google_imengine.cpp
 
 googlepinyin_la_CXXFLAGS = -I$(top_builddir) -I./include \
                            @SCIM_CFLAGS@

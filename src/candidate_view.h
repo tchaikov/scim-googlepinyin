@@ -2,10 +2,11 @@
 #define CANDIDATE_VIEW_H
 
 #define Uses_SCIM_ATTRIBUTE
-#include "scim.h"
+#include <scim.h>
 #include <string>
 
 class GooglePyInstance;
+class PinyinLookupTable;
 class DecodingInfo;
 using scim::AttributeList;
 using std::wstring;
@@ -13,6 +14,7 @@ using std::wstring;
 class CandidateView
 {
 public:
+    CandidateView(GooglePyInstance *pinyin, DecodingInfo *dec_info);
     /**
      * active the previous candidate
      */
@@ -23,7 +25,7 @@ public:
     bool cursor_right();
     bool page_up();
     bool page_down();
-    void enable_active_high_light(bool);
+    void enable_active_highlight(bool enable);
     int get_current_page() const;
     int get_active_candidate_pos() const;
     /**
@@ -40,9 +42,16 @@ private:
     
 private:
     GooglePyInstance *m_pinyin;
+    PinyinLookupTable *m_lookup_table;
     DecodingInfo *m_dec_info;
     int m_page_no;
     int m_cand_in_page;
+    /**
+     * Used to decided whether the active candidate should be highlighted or
+     * not. If user changes focus to composing view (The view to show Pinyin
+     * string), the highlight in candidate view should be removed.
+     */
+    bool m_active_highlight;
 };
 
 #endif // CANDIDATE_VIEW_H

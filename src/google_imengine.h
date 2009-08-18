@@ -45,14 +45,18 @@ private:
 
 class GooglePyInstance : public IMEngineInstanceBase
 {
+    enum ImMode {
+        IM_EN, IM_CN_SIMPLIFIED, IM_CN_TRADITIONAL
+    };
+    
     GooglePyFactory        *m_factory;
     PinyinLookupTable      *m_lookup_table;
     
     Connection           m_reload_signal_connection;
     bool                 m_focused;
-    ImeState             m_ime_state;
+    bool                 m_forward;
     
-  public:
+public:
     GooglePyInstance(GooglePyFactory *factory, PinyinDecoderService *decoder_service,
                      const String& encoding, int id);
     virtual ~GooglePyInstance();
@@ -82,7 +86,9 @@ class GooglePyInstance : public IMEngineInstanceBase
 
 public:
     using IMEngineInstanceBase::commit_string;
-    
+    using IMEngineInstanceBase::show_lookup_table;
+    using IMEngineInstanceBase::hide_lookup_table;
+    using IMEngineInstanceBase::update_lookup_table;
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);

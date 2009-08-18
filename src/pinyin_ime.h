@@ -29,10 +29,9 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
-    bool process_key(const KeyEvent& key);
+    bool process_in_chinese(const KeyEvent& key);
     
 private:
-    bool process_in_chinese(const KeyEvent& key);
     bool process_state_idle(const KeyEvent& key);
     bool process_state_input(const KeyEvent& key);
     bool process_state_predict(const KeyEvent& key);

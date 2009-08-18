@@ -1,6 +1,9 @@
 #ifndef COMPOSING_VIEW_H
 #define COMPOSING_VIEW_H
 
+
+class GooglePyInstance;
+
 /**
  * View used to show composing string (The Pinyin string for the unselected
  * syllables and the Chinese string for the selected syllables.)
@@ -52,10 +55,11 @@ public:
     Status get_status() const;
     void reset();
     void set_visibility(bool visible);
+    void move_cursor(int offset);
     
 private:
     Status m_status;
-    
+    GooglePyInstance *m_pinyin;
 };
 
 #endif // COMPOSING_VIEW_H
