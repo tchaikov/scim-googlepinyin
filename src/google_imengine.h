@@ -89,6 +89,9 @@ public:
     using IMEngineInstanceBase::show_lookup_table;
     using IMEngineInstanceBase::hide_lookup_table;
     using IMEngineInstanceBase::update_lookup_table;
+    using IMEngineInstanceBase::show_preedit_string;
+    using IMEngineInstanceBase::hide_preedit_string;
+    
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);

@@ -1,8 +1,12 @@
 #ifndef COMPOSING_VIEW_H
 #define COMPOSING_VIEW_H
 
+#include <string>
+#define Uses_SCIM_ATTRIBUTE
+#include <scim.h>
 
 class GooglePyInstance;
+class DecodingInfo;
 
 /**
  * View used to show composing string (The Pinyin string for the unselected
@@ -56,10 +60,17 @@ public:
     void reset();
     void set_visibility(bool visible);
     void move_cursor(int offset);
-    
+
+private:
+    void draw_for_pinyin();
+    void draw_for_english();
+    void update_aux_string(const std::wstring& aux,
+                           const AttributeList& attrs);
+
 private:
     Status m_status;
     GooglePyInstance *m_pinyin;
+    DecodingInfo *m_dec_info;
 };
 
 #endif // COMPOSING_VIEW_H

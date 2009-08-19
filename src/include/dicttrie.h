@@ -27,7 +27,7 @@ namespace ime_pinyin {
 
 class DictTrie : AtomDictBase {
  private:
-  typedef struct ParsingMark {
+  struct ParsingMark {
     size_t node_offset:24;
     size_t node_num:8;           // Number of nodes with this spelling id given
                                  // by spl_id. If spl_id is a Shengmu, for nodes
