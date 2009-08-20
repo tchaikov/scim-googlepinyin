@@ -4,7 +4,7 @@ AC_PREFIX_DEFAULT([/usr])
 AC_CONFIG_SRCDIR(src/share/pinyinime.cpp)
 AM_CONFIG_HEADER(config.h)
 
-GETTEXT_PACKAGE=android
+GETTEXT_PACKAGE=google-pinyin
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [The gettext domain])
 
@@ -29,12 +29,12 @@ if test "X$DEBUGMODE" = "Xyes" ; then
     AC_DEFINE(DEBUG, 1, [Define if you want to make for debugging.])
 fi
 
-AC_ARG_WITH([android-datadir],
+AC_ARG_WITH([google-pinyin-datadir],
     AC_HELP_STRING([--with-android-datadir=PATH],
                    [specify the directory where the lexicon data is installed]),
-    [ANDROID_DATADIR="${withval}"],
-    [ANDROID_DATADIR=""])
-AC_SUBST(ANDROID_DATADIR)
+    [SCIM_GOOGLEPINYIN_DATADIR="${withval}"],
+    [SCIM_GOOGLEPINYIN_DATADIR=""])
+AC_SUBST(SCIM_GOOGLEPINYIN_DATADIR)
 
 # Check SCIM
 SCIM_VERSION=1.4.0

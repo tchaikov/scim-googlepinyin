@@ -24,7 +24,11 @@
 
 #include "google_keycode.h"
 #include "pinyin_lookup_table.h"
+#include "google_intl.h"
+#include "pinyin_decoder_service.h"
+#include "pinyin_ime.h"
 #include "google_imengine.h"
+
 
 #define SCIM_PROP_STATUS                  "/IMEngine/GooglePinyin/Status"
 #define SCIM_PROP_LETTER                  "/IMEngine/GooglePinyin/Letter"
@@ -106,15 +110,13 @@ extern "C" {
 
 // implementation of GooglePyFactory
 GooglePyFactory::GooglePyFactory (const ConfigPointer &config)
-    : m_user_data(0),
-      m_config (config),
+    : m_config (config),
       m_valid (false)
 {
     SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory()\n";
     set_languages ("zh_CN");
     m_name = utf8_mbstowcs ("GooglePinyin");
-    m_decoder_service = new PinyinDecoderService()
-    m_valid = load_system_data() && init ();
+    m_valid = init ();
     m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &GooglePyFactory::reload_config));
 }
 
@@ -132,9 +134,9 @@ GooglePyFactory::init ()
     String usr_dict_path = String(user_data_directory +
                                   String(SCIM_PATH_DELIM_STRING) +
                                   String("usr_dict.dat"));
-    m_decoder_service = PinyinDecoderService(sys_dict_path,
-                                             usr_dict_path);
-    return m_decoder_service.is_initialized();
+    m_decoder_service = new PinyinDecoderService(sys_dict_path,
+                                                 usr_dict_path);
+    return m_decoder_service->is_initialized();
 }
 
 GooglePyFactory::~GooglePyFactory ()
@@ -216,12 +218,12 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
                                     int id)
     : IMEngineInstanceBase (factory, encoding, id),
       m_factory (factory),
-      m_decoder_service(decoder_service),
+      
       m_lookup_table (0),
       m_focused (false)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
-    create_session(m_pref, m_pinyin_data, m_user_data->get_history());
+    m_pinyin_ime = new PinyinIME(decoder_service),
     m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
 }
@@ -230,7 +232,6 @@ GooglePyInstance::~GooglePyInstance ()
 {
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": ~GooglePyInstance()\n";
     m_reload_signal_connection.disconnect ();
-    destroy_session();
 }
 
 bool
@@ -241,26 +242,12 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
         key.mask << ", " <<
         key.layout << ")\n";
         
-    if (!m_focused) return false;
+    if (m_focused) return false;
     
-    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
-        m_forward = !m_forward;
-        refresh_all_properties();
-        reset();
-        return true;
-    }
-
     if (key.is_key_release ()) return true;
     
-    if (!m_forward) {
-        if (key.code == SCIM_KEY_Escape && key.mask == 0) {
-            // if get_original_spl_str().empty() return false;
-            reset();
-            return true;
-        }
-        
-    return ( try_switch_cn(key) ||
-             try_select_candidate(key) ||
+    return ( try_cancel(key) ||
+             try_switch_cn(key) ||
              try_process_key(key) );
 }
 
@@ -272,8 +259,6 @@ GooglePyInstance::move_preedit_caret (unsigned int /*pos*/)
 void
 GooglePyInstance::select_candidate (unsigned int item)
 {
-    m_pv->onCandidateSelectRequest(item);
-//  m_pv->makeSelection(item);
 }
 
 void
@@ -281,8 +266,7 @@ GooglePyInstance::update_lookup_table_page_size (unsigned int page_size)
 {
     if (page_size > 0) {
         SCIM_DEBUG_IMENGINE (3) << ": update_lookup_table_page_size(" << page_size << ")\n";
-        m_pv->s_CandiWindowSize = page_size;
-        m_lookup_table->set_page_size(page_size);
+        // TODO
     }
 }
 
@@ -337,14 +321,11 @@ GooglePyInstance::trigger_property (const String &property)
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": trigger_property(" << property << ")\n";
     
     if (property == SCIM_PROP_STATUS) {
-        const int is_CN = m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_CN);
-        m_pv->setStatusAttrValue(CIMIWinHandler::STATUS_ID_CN, is_CN?0:1);
+        
     } else if (property == SCIM_PROP_LETTER) {
-        const int is_fullsimbol = m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLSIMBOL);
-        m_pv->setStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLSIMBOL, is_fullsimbol?0:1);
+        
     } else if (property == SCIM_PROP_PUNCT) {
-        const int is_fullpunc = m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLPUNC);
-        m_pv->setStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLPUNC, is_fullpunc?0:1);
+        
     }
 }
 
@@ -352,7 +333,7 @@ GooglePyInstance::trigger_property (const String &property)
 void
 GooglePyInstance::init_lookup_table_labels ()
 {
-    m_lookup_table->set_page_size (m_pv->s_CandiWindowSize);
+    m_lookup_table->set_page_size (9);
     m_lookup_table->show_cursor ();
 }
 
@@ -370,15 +351,21 @@ GooglePyInstance::initialize_all_properties ()
 }
 
 void
+GooglePyInstance::refresh_aux_string(const wstring& aux,
+                                     const AttributeList& attrs)
+{
+    if (!aux.empty()) {
+        update_aux_string(aux, attrs);
+        show_aux_string();
+    } else {
+        hide_aux_string();
+    }
+}
+
+void
 GooglePyInstance::refresh_all_properties ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_all_properties()\n";
-    m_wh->updateStatus(CIMIWinHandler::STATUS_ID_CN,
-                       m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_CN));
-    m_wh->updateStatus(CIMIWinHandler::STATUS_ID_FULLPUNC,
-                       m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLPUNC));
-    m_wh->updateStatus(CIMIWinHandler::STATUS_ID_FULLSIMBOL, 
-                       m_pv->getStatusAttrValue(CIMIWinHandler::STATUS_ID_FULLSIMBOL));
 }
 
 
@@ -414,125 +401,30 @@ bool
 GooglePyInstance::try_switch_cn(const KeyEvent& key)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": try_switch_cn(" << key.code << ")\n";
-    if (key.code == SCIM_KEY_KP_Space && key.is_shift_down()) {
-        if (key.is_key_release()) return true;
-        trigger_property (SCIM_PROP_STATUS);
+    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
+        m_forward = !m_forward;
+        refresh_all_properties();
+        reset();
         return true;
     }
     return false;
 }
 
-void
-GooglePyInstance::create_session(CGooglepinyinOptions* pref,
-                              CIMIData* pinyin_data,
-                              CBigramHistory* history)
+bool
+GooglePyInstance::try_cancel(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << get_id() <<  ": create_session()\n";
-    
-    CIMIContext* ic = new CIMIContext();
-    ic->setCoreData(pinyin_data);
-    ic->setHistoryMemory(history);
-    ic->setNonCompleteSyllable(true);
-    ic->clear();
-
-    pref->m_GBK = (get_encoding() != "GB2312");
-    int viewType = pref->m_ViewType?
-        CIMIViewFactory::SVT_MODERN:
-        CIMIViewFactory::SVT_CLASSIC;
-    CIMIView* pv = CIMIViewFactory::createView(viewType);
-    pv->setPreference(pref);
-    pv->attachWinHandler(m_wh);
-    pv->attachIC(ic);
-
-    GoogleLookupTable* lookup_table = new GoogleLookupTable();
-    
-    CScimWinHandler* wh = new CScimWinHandler(this, lookup_table);
-    wh->setOptions(pv->getPreference());
-    pv->attachWinHandler(wh);
-    
-    m_wh = wh;
-    m_pv = pv;
-    m_lookup_table = lookup_table;
-}
-
-void
-GooglePyInstance::destroy_session()
-{
-    SCIM_DEBUG_IMENGINE (3) << get_id() <<  ": destroy_session()\n";
-    
-    // wh and ic are not pointers, I don't think it's necessary to delete them
-    // either
-    delete m_pv->getIC();
-    delete m_pv->getWinHandler();
-    delete m_pv;
-    delete m_lookup_table;
-    
-    m_pv = 0;
-    m_wh = 0;
-    m_lookup_table = 0;
-}
-
-AttributeList
-GooglePyInstance::build_preedit_attribs (const IPreeditString* ppd)
-{
-    AttributeList attrs;
-    const int sz = ppd->charTypeSize();
-    for (int i = 0; i < sz; ) {
-        const int ct = ppd->charTypeAt(i);
-        if (ct & IPreeditString::ILLEGAL) {
-            const int start = i;
-            for (++i; (i<sz) && (ppd->charTypeAt(i) & IPreeditString::ILLEGAL); ++i) ;
-            attrs.push_back( Attribute(start, i-start,
-                                       SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
-        } else if (ct & IPreeditString::NORMAL_CHAR) {
-            if (ct & IPreeditString::USER_CHOICE) {
-                const int start = i;
-                for (++i; (i<sz) && (ppd->charTypeAt(i) & IPreeditString::USER_CHOICE); ++i) ;
-                attrs.push_back( Attribute(start, i-start,
-                                           SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_UNDERLINE));
-            } else {
-                ++i;
-            }
-        } else {
-            ++i;
-        }
+    if (key.code == SCIM_KEY_Escape && key.mask == 0) {
+        // if get_original_spl_str().empty() return false;
+        reset();
+        return true;
     }
-    return attrs;
+    return false;
 }
 
-void
-GooglePyInstance::redraw_preedit_string (const IPreeditString* ppd)
+bool
+GooglePyInstance::try_process_key(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << get_id() <<  ": redraw_preedit_string()\n";
-    if (ppd->size() != 0) {
-        AttributeList attrs;
-        const int caret = ppd->caret();
-        if (caret > 0 && caret <= ppd->size()) {
-            attrs.push_back( Attribute(ppd->candi_start(),
-                                       ppd->charTypeSize(),
-                                       SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
-        }
-        update_preedit_string( wstr_to_widestr(ppd->string(), ppd->size()) );
-        show_preedit_string ();
-        update_preedit_caret (caret);
-    } else {
-        hide_preedit_string ();
-    }
-}
-
-void
-GooglePyInstance::redraw_lookup_table(const ICandidateList* pcl)
-{
-    SCIM_DEBUG_IMENGINE (3) << get_id() << ": redraw_lookup_table()\n";
-    SCIM_DEBUG_IMENGINE (3) << "page size = " << m_pv->s_CandiWindowSize << "\n";
-    
-    m_lookup_table->update(*pcl);
-    if (m_lookup_table->number_of_candidates()) {
-        update_lookup_table(*m_lookup_table);
-        show_lookup_table();
-    } else {
-        hide_lookup_table();
-    }
+    return m_pinyin_ime->process_in_chinese(key);
 }
 
 void
@@ -540,7 +432,4 @@ GooglePyInstance::reload_config(const ConfigPointer &config)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reload_config()\n";
     reset();
-    if (m_factory->valid()) {
-        m_factory->load_user_data();
-    }
 }

@@ -4,6 +4,7 @@
 #include <string>
 #define Uses_SCIM_ATTRIBUTE
 #include <scim.h>
+#include "ime_state.h"
 
 class GooglePyInstance;
 class DecodingInfo;
@@ -60,12 +61,13 @@ public:
     void reset();
     void set_visibility(bool visible);
     void move_cursor(int offset);
-
+    void set_decoding_info(DecodingInfo *dec_info, ImeState::State ime_status);
+    void redraw();
+    
 private:
+    void invalidate();
     void draw_for_pinyin();
     void draw_for_english();
-    void update_aux_string(const std::wstring& aux,
-                           const AttributeList& attrs);
 
 private:
     Status m_status;

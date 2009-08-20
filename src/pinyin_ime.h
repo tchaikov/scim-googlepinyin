@@ -29,6 +29,7 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
+    PinyinIME(PinyinDecoderService *);
     bool process_in_chinese(const KeyEvent& key);
     
 private:

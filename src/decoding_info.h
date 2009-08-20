@@ -3,20 +3,13 @@
 
 #include <vector>
 #include <string>
-
+#include "ime_state.h"
 
 using std::string;
 using std::wstring;
 
 class PinyinDecoderService;
 class CandidateView;
-
-struct ImeState {
-    enum State {
-        STATE_BYPASS, STATE_IDLE, STATE_INPUT, STATE_COMPOSING, STATE_PREDICT,
-        STATE_APP_COMPLETION
-    };
-};
 
 class DecodingInfo
 {
@@ -155,7 +148,7 @@ public:
      */
     void prepare_delete_before_cursor();
     
-    string get_original_spl_str() const;
+    wstring get_original_spl_str() const;
     
     int get_spl_str_decoded_len() const;
 
@@ -182,7 +175,8 @@ public:
     // not selecting any choice.
     void choose_decoding_candidate(int index);
     void choose_predict_choice(int choice);
-
+    int get_fixed_len() const;
+    
 private:
     void update_for_search(int n_candidates);
     /**

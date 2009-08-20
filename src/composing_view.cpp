@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "google_imengine.h"
 #include "composing_view.h"
 #include "decoding_info.h"
@@ -32,8 +34,7 @@ ComposingView::move_cursor(int offset)
     } else if (m_status == SHOW_STRING_LOWERCASE) {
         m_status = EDIT_PINYIN;
     }
-    // TODO
-    m_pinyin->refresh_preedit_string();
+    invalidate();
 }
 
 void
@@ -42,10 +43,10 @@ ComposingView::redraw()
     switch (m_status) {
     case EDIT_PINYIN:
     case SHOW_PINYIN:
-        draw_pinyin();
+        draw_for_pinyin();
         break;
     case SHOW_STRING_LOWERCASE:
-        draw_english();
+        draw_for_english();
         break;
     default:
         assert(false && "unknown composing status");
@@ -95,7 +96,7 @@ ComposingView::draw_for_pinyin()
         attrs.push_back(Attribute(aux.length(), item.length(),
                                   SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_NONE));
     }
-    update_aux_string(aux, attrs);
+    m_pinyin->refresh_aux_string(aux, attrs);
 }
 
 void
@@ -108,17 +109,31 @@ ComposingView::draw_for_english()
     aux = m_dec_info->get_original_spl_str();
     attrs.push_back(Attribute(0, aux.length(),
                               SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_HIGHLIGHT));
-    update_aux_string(aux, attrs);
+    m_pinyin->refresh_aux_string(aux, attrs);
 }
 
 void
-ComposingView::update_aux_string(const wstring& aux,
-                                 const AttributeList& attrs)
+ComposingView::invalidate()
 {
-    if (!aux.empty()) {
-        m_pinyin->update_aux_string(aux, attrs);
-        show_aux_string();
+    redraw();
+}
+
+void
+ComposingView::set_decoding_info(DecodingInfo *dec_info,
+                                 ImeState::State ime_status)
+{
+    m_dec_info = dec_info;
+    if (ime_status == ImeState::STATE_INPUT) {
+        m_status = SHOW_PINYIN;
+        m_dec_info->move_cursor_to_edge(false);
     } else {
-        hide_aux_string();
+        if (dec_info->get_fixed_len() != 0 ||
+            m_status == EDIT_PINYIN) {
+            m_status = EDIT_PINYIN;
+        } else {
+            m_status = SHOW_STRING_LOWERCASE;
+        }
+        m_dec_info->move_cursor(0);
     }
+    invalidate();
 }

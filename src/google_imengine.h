@@ -1,14 +1,17 @@
 #ifndef SUNPINYIN_IMENGINE_H
 #define SUNPINYIN_IMENGINE_H
 
+#include <string>
 #define Uses_SCIM_IMENGINE
 #define Uses_SCIM_CONFIG_BASE
 #include <scim.h>
 
+using std::wstring;
 using namespace scim;
 
 class PinyinLookupTable;
 class PinyinDecoderService;
+class PinyinIME;
 
 class GooglePyFactory : public IMEngineFactoryBase
 {
@@ -55,6 +58,8 @@ class GooglePyInstance : public IMEngineInstanceBase
     Connection           m_reload_signal_connection;
     bool                 m_focused;
     bool                 m_forward;
+
+    PinyinIME           *m_pinyin_ime;
     
 public:
     GooglePyInstance(GooglePyFactory *factory, PinyinDecoderService *decoder_service,
@@ -91,7 +96,8 @@ public:
     using IMEngineInstanceBase::update_lookup_table;
     using IMEngineInstanceBase::show_preedit_string;
     using IMEngineInstanceBase::hide_preedit_string;
-    
+    using IMEngineInstanceBase::update_aux_string;
+    void refresh_aux_string(const wstring&, const AttributeList&);
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);
@@ -102,8 +108,7 @@ private:
     void refresh_all_properties ();
     void initialize_all_properties();
     
-    bool try_switch_style(const KeyEvent& key);
-    bool try_switch_gbk(const KeyEvent& key);
+    bool try_cancel(const KeyEvent& key);
     bool try_switch_cn(const KeyEvent& key);
     bool try_process_key(const KeyEvent& key);
 

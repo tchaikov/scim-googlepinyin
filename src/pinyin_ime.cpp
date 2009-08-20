@@ -9,6 +9,12 @@
 
 using namespace scim;
 
+PinyinIME::PinyinIME(PinyinDecoderService *decoder_service)
+    : m_decoder_service(decoder_service),
+      m_dec_info(decoder_service)
+{
+}
+
 bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
 {
@@ -76,7 +82,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
         }
         return true;
     } else if (key.code == SCIM_KEY_Return) {
-        commit_result_text(str2wstr(m_dec_info.get_original_spl_str()));
+        commit_result_text(m_dec_info.get_original_spl_str());
         reset_to_idle_state();
         return true;
     } else if (key.code == SCIM_KEY_space) {
@@ -146,7 +152,7 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
         if (m_cmps_view->get_status() == ComposingView::SHOW_STRING_LOWERCASE) {
-            commit_result_text(str2wstr(m_dec_info.get_original_spl_str()));
+            commit_result_text(m_dec_info.get_original_spl_str());
         } else {
             commit_result_text(m_dec_info.get_composing_str());
         }
@@ -187,7 +193,11 @@ PinyinIME::commit_result_text(const wstring& result_text)
 void
 PinyinIME::update_composing_text(bool visible)
 {
-    m_cmps_view->set_visibility(visible);
+    if (visible) {
+        m_cmps_view->set_decoding_info(&m_dec_info,
+                                       m_ime_state);
+    }
+    m_cmps_view->set_visibility(false);
 }
 
 // see PinyinInstance::lookup_select()

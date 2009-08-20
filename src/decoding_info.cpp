@@ -74,10 +74,10 @@ DecodingInfo::length() const
     return m_surface.length();
 }
 
-string
+wstring
 DecodingInfo::get_original_spl_str() const
 {
-    return m_surface;
+    return str2wstr(m_surface);
 }
 
 int
@@ -487,4 +487,10 @@ DecodingInfo::char_before_cursor_is_separator() const
         return true;
     }
     return false;
+}
+
+int
+DecodingInfo::get_fixed_len() const
+{
+    return m_fixed_len;
 }
