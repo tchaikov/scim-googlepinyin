@@ -28,6 +28,9 @@ public:
     void enable_active_highlight(bool enable);
     int get_current_page() const;
     int get_active_candidate_pos() const;
+    int get_page_size() const;
+    void set_page_size(int);
+    
     /**
      * show or hide the candidate dispaly area
      */
@@ -46,6 +49,8 @@ private:
     DecodingInfo *m_dec_info;
     int m_page_no;
     int m_cand_in_page;
+    int m_page_size;
+    
     /**
      * Used to decided whether the active candidate should be highlighted or
      * not. If user changes focus to composing view (The view to show Pinyin

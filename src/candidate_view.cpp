@@ -8,6 +8,7 @@ CandidateView::CandidateView(GooglePyInstance *pinyin, DecodingInfo *dec_info)
       m_dec_info(dec_info),
       m_page_no(-1),
       m_cand_in_page(-1),
+      m_page_size(10),
       m_active_highlight(true)
 {}
 
@@ -47,7 +48,7 @@ CandidateView::page_down()
     if (m_dec_info->prepare_page(m_page_no + 1)) {
         return false;
     }
-        // XXX: always highlight
+    // XXX: always highlight
     show_page(m_page_no + 1, m_cand_in_page, m_active_highlight);
     return true;
 }
@@ -60,6 +61,18 @@ CandidateView::set_visibility(bool visibility)
     } else {
         m_pinyin->hide_lookup_table();
     }
+}
+
+int
+CandidateView::get_page_size() const
+{
+    return m_page_size;
+}
+
+void
+CandidateView::set_page_size(int page_size)
+{
+    m_page_size = page_size;
 }
 
 void

@@ -16,6 +16,30 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service)
 }
 
 bool
+PinyinIME::process_key(const KeyEvent& key)
+{
+    if (m_ime_state == ImeState::STATE_BYPASS) return false;
+    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
+        m_input_mode = !m_input_mode;
+        reset_to_idle_state(false);
+        return true;
+    }
+    if (m_input_mode == INPUT_ENGLISH) {
+        return false;
+    }
+    if (m_input_mode == INPUT_CHINESE) {
+        return process_in_chinese(key);
+    }
+    return false;
+}
+
+void
+PinyinIME::set_candidate_page_size(unsigned page_size)
+{
+    m_cand_view->set_page_size(page_size);
+}
+
+bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
 {
     switch (m_ime_state) {
@@ -75,11 +99,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
         return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;
-        const int current_page = m_cand_view->get_current_page();
-        if (active_pos < m_dec_info.get_current_page_size(current_page)) {
-            active_pos += m_dec_info.get_current_page_start(current_page);
-            choose_and_update(active_pos);
-        }
+        choose_candidate_in_page(active_pos);
         return true;
     } else if (key.code == SCIM_KEY_Return) {
         commit_result_text(m_dec_info.get_original_spl_str());
@@ -117,11 +137,7 @@ PinyinIME::process_state_predict(const KeyEvent& key)
         return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;
-        const int current_page = m_cand_view->get_current_page();
-        if (active_pos < m_dec_info.get_current_page_size(current_page)) {
-            active_pos += m_dec_info.get_current_page_start(current_page);
-            choose_and_update(active_pos);
-        }
+        choose_candidate_in_page(active_pos);
         return true;
     } else if (key.code == SCIM_KEY_Return) {
         commit_result_text(L"\n");
@@ -200,7 +216,30 @@ PinyinIME::update_composing_text(bool visible)
     m_cmps_view->set_visibility(false);
 }
 
+void
+PinyinIME::choose_candidate_in_page(unsigned index)
+{
+    const int current_page = m_cand_view->get_current_page();
+    if (index < m_dec_info.get_current_page_size(current_page)) {
+        index += m_dec_info.get_current_page_start(current_page);
+        choose_and_update(index);
+    }
+}
+
+void
+PinyinIME::candidate_page_up()
+{
+    m_cand_view->page_up();
+}
+
+void
+PinyinIME::candidate_page_down()
+{
+    m_cand_view->page_down();
+}
+
 // see PinyinInstance::lookup_select()
+// @param index the candidate index in the lookup table
 void
 PinyinIME::choose_and_update(int index)
 {

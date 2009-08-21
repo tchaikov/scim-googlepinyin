@@ -147,11 +147,11 @@ DecodingInfo::calculate_page(int page_no, CandidateView* cand_view)
         return;
 
     const int cand_size = m_candidates_list.size();
-    
+    const int page_size = cand_view->get_page_size();
     for (int p = from_page; p <= page_no; p++) {
         int p_start = m_page_start[p];
         int p_size = 0;
-        while (p_start + p_size < cand_size && p_size < MAX_PAGE_SIZE_DISPLAY) {
+        while (p_start + p_size < cand_size && p_size < page_size) {
             const int item_pos = p_start + p_size;
             const wstring& item_str = m_candidates_list[item_pos];
             cand_view->append_candidate(item_str);

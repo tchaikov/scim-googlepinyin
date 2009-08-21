@@ -37,6 +37,9 @@ PinyinLookupTable::~PinyinLookupTable()
 {
 }
 
+/**
+ * @param index the candidate index in the lookup table
+ */
 WideString
 PinyinLookupTable::get_candidate (int index) const
 {

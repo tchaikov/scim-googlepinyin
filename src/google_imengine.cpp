@@ -218,12 +218,12 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
                                     int id)
     : IMEngineInstanceBase (factory, encoding, id),
       m_factory (factory),
-      
-      m_lookup_table (0),
       m_focused (false)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
-    m_pinyin_ime = new PinyinIME(decoder_service),
+    m_pinyin_ime = new PinyinIME(decoder_service);
+    m_dec_info = new DecodingInfo(decoder_service);
+    m_lookup_table = new PinyinLookupTable(m_dec_info, 10);
     m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
 }
@@ -247,38 +247,43 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
     if (key.is_key_release ()) return true;
     
     return ( try_cancel(key) ||
-             try_switch_cn(key) ||
              try_process_key(key) );
 }
 
 void
-GooglePyInstance::move_preedit_caret (unsigned int /*pos*/)
+GooglePyInstance::move_preedit_caret (unsigned int pos)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "(" << pos << ")\n";
 }
 
+// item is the in-page index
 void
 GooglePyInstance::select_candidate (unsigned int item)
 {
+    m_pinyin_ime->choose_candidate_in_page(item);
 }
 
 void
 GooglePyInstance::update_lookup_table_page_size (unsigned int page_size)
 {
+    SCIM_DEBUG_IMENGINE (3) << ": update_lookup_table_page_size(" << page_size << ")\n";
     if (page_size > 0) {
-        SCIM_DEBUG_IMENGINE (3) << ": update_lookup_table_page_size(" << page_size << ")\n";
-        // TODO
+        m_pinyin_ime->set_candidate_page_size(page_size);
     }
 }
 
 void
 GooglePyInstance::lookup_table_page_up ()
 {
-    lookup_page_up();
+    m_pinyin_ime->candidate_page_up();
+    update_lookup_table(*m_lookup_table);
 }
 
 void
 GooglePyInstance::lookup_table_page_down ()
 {
+    m_pinyin_ime->candidate_page_down();
+    update_lookup_table(*m_lookup_table);
 }
 
 
@@ -424,7 +429,7 @@ GooglePyInstance::try_cancel(const KeyEvent& key)
 bool
 GooglePyInstance::try_process_key(const KeyEvent& key)
 {
-    return m_pinyin_ime->process_in_chinese(key);
+    return m_pinyin_ime->process_key(key);
 }
 
 void

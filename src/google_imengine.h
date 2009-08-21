@@ -11,6 +11,7 @@ using namespace scim;
 
 class PinyinLookupTable;
 class PinyinDecoderService;
+class DecodingInfo;
 class PinyinIME;
 
 class GooglePyFactory : public IMEngineFactoryBase
@@ -59,6 +60,7 @@ class GooglePyInstance : public IMEngineInstanceBase
     bool                 m_focused;
     bool                 m_forward;
 
+    DecodingInfo        *m_dec_info;
     PinyinIME           *m_pinyin_ime;
     
 public:

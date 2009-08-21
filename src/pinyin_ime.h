@@ -22,7 +22,11 @@ class PinyinIME
     ImeState::State m_ime_state;
     CandidateView *m_cand_view;
     ComposingView *m_cmps_view;
-    
+    enum InputMode {
+        INPUT_CHINESE,
+        INPUT_ENGLISH
+    };
+    int m_input_mode;
     /**
      * the absolute offset of candidate
      */
@@ -30,9 +34,17 @@ class PinyinIME
     
 public:
     PinyinIME(PinyinDecoderService *);
-    bool process_in_chinese(const KeyEvent& key);
+    bool process_key(const KeyEvent& key);
+    void set_candidate_page_size(unsigned page_size);
+    /**
+     * @param index the index in current page of the selected candidate
+     */
+    void choose_candidate_in_page(unsigned pos);
+    void candidate_page_up();
+    void candidate_page_down();
     
 private:
+    bool process_in_chinese(const KeyEvent& key);
     bool process_state_idle(const KeyEvent& key);
     bool process_state_input(const KeyEvent& key);
     bool process_state_predict(const KeyEvent& key);
