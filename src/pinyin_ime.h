@@ -1,9 +1,9 @@
 #ifndef PINYIN_IME_H
 #define PINYIN_IME_H
 
-#include "decoding_info.h"
+#include "ime_state.h"
 
-class PinyinDecoderService;
+class DecodingInfo;
 class CandidateView;
 class ComposingView;
 
@@ -17,8 +17,7 @@ using scim::KeyEvent;
  */
 class PinyinIME
 {
-    PinyinDecoderService* m_decoder_service;
-    DecodingInfo m_dec_info;
+    DecodingInfo *m_dec_info;
     ImeState::State m_ime_state;
     CandidateView *m_cand_view;
     ComposingView *m_cmps_view;
@@ -33,7 +32,7 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
-    PinyinIME(PinyinDecoderService *);
+    PinyinIME(DecodingInfo *);
     bool process_key(const KeyEvent& key);
     void set_candidate_page_size(unsigned page_size);
     /**

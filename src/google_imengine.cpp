@@ -26,6 +26,7 @@
 #include "pinyin_lookup_table.h"
 #include "google_intl.h"
 #include "pinyin_decoder_service.h"
+#include "decoding_info.h"
 #include "pinyin_ime.h"
 #include "google_imengine.h"
 
@@ -221,8 +222,8 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
       m_focused (false)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
-    m_pinyin_ime = new PinyinIME(decoder_service);
     m_dec_info = new DecodingInfo(decoder_service);
+    m_pinyin_ime = new PinyinIME(m_dec_info);
     m_lookup_table = new PinyinLookupTable(m_dec_info, 10);
     m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
@@ -232,6 +233,9 @@ GooglePyInstance::~GooglePyInstance ()
 {
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": ~GooglePyInstance()\n";
     m_reload_signal_connection.disconnect ();
+    delete m_lookup_table;
+    delete m_dec_info;
+    delete m_pinyin_ime;
 }
 
 bool

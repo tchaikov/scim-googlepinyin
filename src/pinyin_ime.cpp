@@ -1,7 +1,7 @@
 #define Uses_SCIM_EVENT
 #define Uses_SCIM_IMENGINE
 #include <scim.h>
-#include "pinyin_decoder_service.h"
+#include "decoding_info.h"
 #include "pinyin_ime.h"
 #include "candidate_view.h"
 #include "composing_view.h"
@@ -9,11 +9,9 @@
 
 using namespace scim;
 
-PinyinIME::PinyinIME(PinyinDecoderService *decoder_service)
-    : m_decoder_service(decoder_service),
-      m_dec_info(decoder_service)
-{
-}
+PinyinIME::PinyinIME(DecodingInfo *dec_info)
+    : m_dec_info(dec_info)
+{}
 
 bool
 PinyinIME::process_key(const KeyEvent& key)
@@ -61,7 +59,7 @@ PinyinIME::process_state_idle(const KeyEvent& key)
 {
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' && !key.is_alt_down()) {
-        m_dec_info.add_spl_char(ch, true);
+        m_dec_info->add_spl_char(ch, true);
         choose_and_update(-1);
         return true;
     }
@@ -77,12 +75,12 @@ PinyinIME::process_state_input(const KeyEvent& key)
 {
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' ||
-        ch == '\'' && !m_dec_info.char_before_cursor_is_separator() ||
+        ch == '\'' && !m_dec_info->char_before_cursor_is_separator() ||
         key.code == SCIM_KEY_Delete) {
         return process_surface_change(key);
     }
     else if (ch == ',' || ch == '.' ) {
-        input_comma_period(m_dec_info.get_current_full_sent(m_candidate_index),
+        input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
                            ch, true);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
@@ -102,7 +100,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
         choose_candidate_in_page(active_pos);
         return true;
     } else if (key.code == SCIM_KEY_Return) {
-        commit_result_text(m_dec_info.get_original_spl_str());
+        commit_result_text(m_dec_info->get_original_spl_str());
         reset_to_idle_state();
         return true;
     } else if (key.code == SCIM_KEY_space) {
@@ -121,10 +119,10 @@ PinyinIME::process_state_predict(const KeyEvent& key)
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z') {
         change_to_state_input(true);
-        m_dec_info.add_spl_char(ch, true);
+        m_dec_info->add_spl_char(ch, true);
         choose_and_update(-1);
     } else if (ch == ',' || ch == '.' ) {
-        input_comma_period(m_dec_info.get_current_full_sent(m_candidate_index),
+        input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
                            ch, true);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
@@ -154,7 +152,7 @@ bool
 PinyinIME::process_state_edit_composing(const KeyEvent& key)
 {
     if (key.code == SCIM_KEY_Down) {
-        if (!m_dec_info.selection_finished()) {
+        if (!m_dec_info->selection_finished()) {
             change_to_state_input(true);
         }
     } else if (key.code == SCIM_KEY_Home) {
@@ -168,9 +166,9 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
         if (m_cmps_view->get_status() == ComposingView::SHOW_STRING_LOWERCASE) {
-            commit_result_text(m_dec_info.get_original_spl_str());
+            commit_result_text(m_dec_info->get_original_spl_str());
         } else {
-            commit_result_text(m_dec_info.get_composing_str());
+            commit_result_text(m_dec_info->get_composing_str());
         }
     } else {
         return process_surface_change(key);
@@ -181,19 +179,19 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
 bool
 PinyinIME::process_surface_change(const KeyEvent& key)
 {
-    if (m_dec_info.is_spl_str_full() && key.code != SCIM_KEY_Delete) {
+    if (m_dec_info->is_spl_str_full() && key.code != SCIM_KEY_Delete) {
         return true;
     }
     char ch = key.get_ascii_code();
     
     if ((ch >= 'a' && ch <= 'z') ||
-        (ch == '\'' && !m_dec_info.char_before_cursor_is_separator()) ||
+        (ch == '\'' && !m_dec_info->char_before_cursor_is_separator()) ||
         ( ((ch >= '0' && ch <= '9') || ch == ' ') &&
           m_ime_state == ImeState::STATE_COMPOSING)) {
-        m_dec_info.add_spl_char(ch, false);
+        m_dec_info->add_spl_char(ch, false);
         choose_and_update(-1);
     } else if (key.code == SCIM_KEY_Delete) {
-        m_dec_info.prepare_delete_before_cursor();
+        m_dec_info->prepare_delete_before_cursor();
         choose_and_update(-1);
     }
     
@@ -210,7 +208,7 @@ void
 PinyinIME::update_composing_text(bool visible)
 {
     if (visible) {
-        m_cmps_view->set_decoding_info(&m_dec_info,
+        m_cmps_view->set_decoding_info(m_dec_info,
                                        m_ime_state);
     }
     m_cmps_view->set_visibility(false);
@@ -220,8 +218,8 @@ void
 PinyinIME::choose_candidate_in_page(unsigned index)
 {
     const int current_page = m_cand_view->get_current_page();
-    if (index < m_dec_info.get_current_page_size(current_page)) {
-        index += m_dec_info.get_current_page_start(current_page);
+    if (index < m_dec_info->get_current_page_size(current_page)) {
+        index += m_dec_info->get_current_page_start(current_page);
         choose_and_update(index);
     }
 }
@@ -247,22 +245,22 @@ PinyinIME::choose_and_update(int index)
         // Get result candidate list, if choice_id < 0, do a new decoding.
         // If choice_id >=0, select the candidate, and get the new candidate
         // list.
-        m_dec_info.choose_decoding_candidate(index);
+        m_dec_info->choose_decoding_candidate(index);
     } else {
         // Choose a prediction item.
-        m_dec_info.choose_predict_choice(index);
+        m_dec_info->choose_predict_choice(index);
     }
 
-    if (!m_dec_info.get_composing_str().empty()) {
-        WideString result_str = m_dec_info.get_composing_str_active_part();
+    if (!m_dec_info->get_composing_str().empty()) {
+        WideString result_str = m_dec_info->get_composing_str_active_part();
         if (m_ime_state == ImeState::STATE_IDLE) {
-            if (m_dec_info.get_spl_str_decoded_len() == 0) {
+            if (m_dec_info->get_spl_str_decoded_len() == 0) {
                 change_to_state_composing(true);
             } else {
                 change_to_state_input(true);
             }
         } else {
-            if (m_dec_info.selection_finished()) {
+            if (m_dec_info->selection_finished()) {
                 change_to_state_composing(true);
             }
         }
@@ -295,7 +293,7 @@ PinyinIME::reset_to_idle_state(bool)
     if (ImeState::STATE_IDLE == m_ime_state) return;
 
     m_ime_state = ImeState::STATE_IDLE;
-    m_dec_info.reset();
+    m_dec_info->reset();
     m_cmps_view->reset();
     reset_candidate_window();
 }
@@ -312,7 +310,7 @@ PinyinIME::show_candidate_window(bool show_composing_view)
 {
     m_cand_view->set_visibility(true);
     update_composing_text(show_composing_view);
-    m_cand_view->show_candidates(&m_dec_info,
+    m_cand_view->show_candidates(m_dec_info,
                                  ImeState::STATE_COMPOSING != m_ime_state);
 }
 
@@ -325,7 +323,7 @@ PinyinIME::dismiss_candidate_window()
 void
 PinyinIME::reset_candidate_window()
 {
-    m_dec_info.reset_candidates();
+    m_dec_info->reset_candidates();
     show_candidate_window(false);
 }
 
