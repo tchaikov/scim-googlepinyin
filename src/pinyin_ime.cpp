@@ -12,14 +12,15 @@
 
 using namespace scim;
 
-PinyinIME::PinyinIME(DecodingInfo *dec_info,
+PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
                      FunctionKeys *func_keys,
                      GooglePyInstance *pinyin)
     : m_ime_state(ImeState::STATE_IDLE),
-      m_dec_info(dec_info), m_func_keys(func_keys), m_pinyin(pinyin)
+      m_func_keys(func_keys), m_pinyin(pinyin)
 {
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
     m_cmps_view = new ComposingView(m_pinyin, m_dec_info);
+    m_dec_info = new DecodingInfo(decoder_service, m_ime_state);
 }
 
 bool
@@ -38,7 +39,7 @@ PinyinIME::process_key(const KeyEvent& key)
         return process_in_chinese(key);
     } else {
         // m_input_mode == INPUT_ENGLISH)
-        SCIM_DEBUG_IMENGINE (3) << "process_key(english mode)!\n";
+        SCIM_DEBUG_IMENGINE (3) << "process_key(english mode)\n";
         return false;
     }
 }
@@ -76,6 +77,11 @@ PinyinIME::redraw()
     // TODO: redraw all views
 }
 
+const DecodingInfo*
+PinyinIME::get_decoding_info() const
+{
+    return m_dec_info;
+}
 
 bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
@@ -286,6 +292,8 @@ PinyinIME::candidate_page_down()
 void
 PinyinIME::choose_and_update(int cand_id)
 {
+    SCIM_DEBUG_IMENGINE (3) << "choose_and_update(" << cand_id
+                            << ")\n";
     if (m_input_mode != INPUT_CHINESE) {
         wstring choice = m_dec_info->get_candidate(cand_id);
         if (!choice.empty()) {

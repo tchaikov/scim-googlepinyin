@@ -10,7 +10,7 @@ class DecodingInfo;
 
 class PinyinLookupTable : public LookupTable
 {
-    DecodingInfo* m_decoding_info;
+    const DecodingInfo* m_dec_info;
     
     PinyinLookupTable (const PinyinLookupTable &);
     const PinyinLookupTable & operator= (const PinyinLookupTable &);
@@ -18,7 +18,7 @@ class PinyinLookupTable : public LookupTable
     uint32 m_total;
     
 public:
-    PinyinLookupTable(DecodingInfo *decoding_info,
+    PinyinLookupTable(const DecodingInfo *decoding_info,
                       int page_size = 10);
     ~PinyinLookupTable();
     virtual WideString get_candidate (int index) const;

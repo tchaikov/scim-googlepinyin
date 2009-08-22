@@ -125,10 +125,10 @@ class DecodingInfo
      */
     bool m_is_pos_in_spl;;
     
-    ImeState::State m_ime_state;
+    const ImeState::State& m_ime_state;
     
 public:
-    DecodingInfo(PinyinDecoderService *);
+    DecodingInfo(PinyinDecoderService *, const ImeState::State&);
     DecodingInfo(const DecodingInfo&);
     
     void reset();

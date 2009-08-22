@@ -3,7 +3,7 @@
 
 #include "ime_state.h"
 
-class DecodingInfo;
+class PinyinDecoderService;
 class CandidateView;
 class ComposingView;
 class GooglePyInstance;
@@ -37,7 +37,7 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
-    PinyinIME(DecodingInfo *, FunctionKeys *, GooglePyInstance *);
+    PinyinIME(PinyinDecoderService *, FunctionKeys *, GooglePyInstance *);
     bool process_key(const KeyEvent& key);
     void set_candidate_page_size(unsigned page_size);
     /**
@@ -50,6 +50,10 @@ public:
     bool is_chinese_mode() const;
     void reset();
     void redraw();
+    /**
+     * for PinyinLookupTable
+     */
+    const DecodingInfo *get_decoding_info() const;
     
 private:
     bool process_in_chinese(const KeyEvent& key);

@@ -229,10 +229,12 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
       m_focused (false)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
-    m_dec_info = new DecodingInfo(decoder_service);
-    m_pinyin_ime = new PinyinIME(m_dec_info, func_keys, this);
-    m_lookup_table = new PinyinLookupTable(m_dec_info, 10);
-    m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
+    m_pinyin_ime = new PinyinIME(decoder_service, func_keys, this);
+    m_lookup_table = new PinyinLookupTable(m_pinyin_ime->get_decoding_info(),
+                                           10);
+    m_reload_signal_connection =
+        factory->m_config->signal_connect_reload (
+            slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
 }
 
@@ -248,10 +250,11 @@ GooglePyInstance::~GooglePyInstance ()
 bool
 GooglePyInstance::process_key_event (const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": process_key_event(" << m_focused << ", "  <<
-        key.code << ", " <<
-        key.mask << ", " <<
-        key.layout << ")\n";
+    SCIM_DEBUG_IMENGINE (3) <<  get_id()
+                            << ": process_key_event(" << m_focused << ", "
+                            << key.code << ", "
+                            << key.mask << ", "
+                            << key.layout << ")\n";
         
     if (!m_focused) return false;
     

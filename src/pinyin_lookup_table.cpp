@@ -16,10 +16,10 @@ w2wide(const wstring& w)
     return wide_str;
 }
 
-PinyinLookupTable::PinyinLookupTable(DecodingInfo *decoding_info,
+PinyinLookupTable::PinyinLookupTable(const DecodingInfo *dec_info,
                                      int page_size)
     : LookupTable(page_size),
-      m_decoding_info(decoding_info)
+      m_dec_info(dec_info)
 {
     std::vector <WideString> labels;
     char buf [2] = { 0, 0 };
@@ -45,13 +45,13 @@ PinyinLookupTable::get_candidate (int index) const
 {
     // the start point should be synced
     SCIM_DEBUG_IMENGINE  (3) <<  "get_candidate(" << index << ")\n";
-    m_decoding_info->get_candidate(index);
+    m_dec_info->get_candidate(index);
 }
 
 AttributeList
 PinyinLookupTable::get_attributes (int index) const
 {
-    SCIM_DEBUG_IMENGINE (2) << __PRETTY_FUNCTION__ << index << "!\n";
+    SCIM_DEBUG_IMENGINE (2) << "get_attributes(" << index << ")\n";
     // TODO: see CandidateView.onDraw()
     return AttributeList();
 }
@@ -59,7 +59,10 @@ PinyinLookupTable::get_attributes (int index) const
 uint32
 PinyinLookupTable::number_of_candidates () const
 {
-    return m_decoding_info->get_candidates_number();
+    SCIM_DEBUG_IMENGINE (2) << "number_of_candidates() => "
+                            << m_dec_info->get_candidates_number()
+                            << "\n";
+    return m_dec_info->get_candidates_number();
 }
 
 void
