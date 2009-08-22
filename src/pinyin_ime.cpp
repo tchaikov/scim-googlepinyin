@@ -15,7 +15,8 @@ using namespace scim;
 PinyinIME::PinyinIME(DecodingInfo *dec_info,
                      FunctionKeys *func_keys,
                      GooglePyInstance *pinyin)
-    : m_dec_info(dec_info), m_func_keys(func_keys), m_pinyin(pinyin)
+    : m_ime_state(ImeState::STATE_IDLE),
+      m_dec_info(dec_info), m_func_keys(func_keys), m_pinyin(pinyin)
 {
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
     m_cmps_view = new ComposingView(m_pinyin, m_dec_info);
@@ -26,7 +27,6 @@ PinyinIME::process_key(const KeyEvent& key)
 {
     if (m_ime_state == ImeState::STATE_BYPASS) return false;
     if (m_func_keys->is_mode_switch_key(key)) {
-        SCIM_DEBUG_IMENGINE (3) << "process_key(space+shift)!\n";
         trigger_input_mode();
         return true;
     }
@@ -47,6 +47,7 @@ void
 PinyinIME::trigger_input_mode()
 {
     m_input_mode = !m_input_mode;
+    SCIM_DEBUG_IMENGINE (3) << "trigger_input_mode(" << m_input_mode << ")\n";
     m_pinyin->refresh_status_property(is_chinese_mode());
     reset_to_idle_state(false);
 }
@@ -96,6 +97,7 @@ PinyinIME::process_in_chinese(const KeyEvent& key)
 bool
 PinyinIME::process_state_idle(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' && !key.is_alt_down()) {
         m_dec_info->add_spl_char(ch, true);
@@ -112,6 +114,7 @@ PinyinIME::process_state_idle(const KeyEvent& key)
 bool
 PinyinIME::process_state_input(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' ||
         ch == '\'' && !m_dec_info->char_before_cursor_is_separator() ||
@@ -153,6 +156,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
 bool
 PinyinIME::process_state_predict(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     // In this status, when user presses keys in [a..z], the status will
     // change to input state.
     char ch = key.get_ascii_code();
@@ -190,6 +194,7 @@ PinyinIME::process_state_predict(const KeyEvent& key)
 bool
 PinyinIME::process_state_edit_composing(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     if (key.code == SCIM_KEY_Down) {
         if (!m_dec_info->selection_finished()) {
             change_to_state_input(true);
@@ -240,7 +245,8 @@ PinyinIME::process_surface_change(const KeyEvent& key)
 void
 PinyinIME::commit_result_text(const wstring& result_text)
 {
-    // TODO
+    m_pinyin->commit_string(result_text);
+    m_cmps_view->set_visibility(false);
 }
 
 void
@@ -278,20 +284,43 @@ PinyinIME::candidate_page_down()
 // see PinyinInstance::lookup_select()
 // @param index the candidate index in the lookup table
 void
-PinyinIME::choose_and_update(int index)
+PinyinIME::choose_and_update(int cand_id)
 {
+    if (m_input_mode != INPUT_CHINESE) {
+        wstring choice = m_dec_info->get_candidate(cand_id);
+        if (!choice.empty()) {
+            commit_result_text(choice);
+        }
+        reset_to_idle_state(false);
+        return;
+    }
+    
     if (m_ime_state != ImeState::STATE_PREDICT) {
         // Get result candidate list, if choice_id < 0, do a new decoding.
         // If choice_id >=0, select the candidate, and get the new candidate
         // list.
-        m_dec_info->choose_decoding_candidate(index);
+        m_dec_info->choose_decoding_candidate(cand_id);
     } else {
         // Choose a prediction item.
-        m_dec_info->choose_predict_choice(index);
+        m_dec_info->choose_predict_choice(cand_id);
     }
-
-    if (!m_dec_info->get_composing_str().empty()) {
-        WideString result_str = m_dec_info->get_composing_str_active_part();
+    
+    if (m_dec_info->get_composing_str().empty()) {
+        reset_to_idle_state(false);
+        return;
+    }
+    
+    wstring result_str = m_dec_info->get_composing_str_active_part();
+    if (cand_id >= 0 && m_dec_info->can_do_prediction()) {
+        commit_result_text(result_str);
+        m_ime_state = ImeState::STATE_PREDICT;
+        m_dec_info->reset_candidates();
+        if (m_dec_info->get_candidates_number() > 0) {
+            show_candidate_window(false);
+        } else {
+            reset_to_idle_state(false);
+        }
+    } else {
         if (m_ime_state == ImeState::STATE_IDLE) {
             if (m_dec_info->get_spl_str_decoded_len() == 0) {
                 change_to_state_composing(true);
@@ -304,8 +333,6 @@ PinyinIME::choose_and_update(int index)
             }
         }
         show_candidate_window(true);
-    } else {
-        reset_to_idle_state(false);
     }
 }
 

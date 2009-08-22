@@ -28,7 +28,7 @@ FunctionKeys::match_key_event (const std::vector <KeyEvent>& keyvec,
     SCIM_DEBUG_IMENGINE (3) << "match_key_event()\n";
     
     for (kit = keyvec.begin (); kit != keyvec.end (); ++kit) {
-        SCIM_DEBUG_IMENGINE (3) << kit->code << ", " << kit->mask << "\n";
+        //SCIM_DEBUG_IMENGINE (3) << kit->code << ", " << kit->mask << "\n";
         if (key.code == kit->code && key.mask == kit->mask)
             if (!(key.mask & SCIM_KEY_ReleaseMask) || m_prev_key.code == key.code)
                 return true;

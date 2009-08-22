@@ -65,7 +65,12 @@ PinyinDecoderService::get_spelling_start()
 {
     const unsigned short *spelling_start;
     size_t len = im_get_spl_start_pos(spelling_start);
-    return vector<int> (spelling_start, spelling_start + len);
+    vector<int> spl_start;
+    // element 0 is used to store the length of buffer.
+    spl_start.push_back(len);
+    // There will be len + 1 elements in the buffer when len > 0.
+    copy(spelling_start, spelling_start + len + 1, back_inserter(spl_start));
+    return spl_start;
 }
 
 wstring

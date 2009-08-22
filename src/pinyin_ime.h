@@ -19,8 +19,8 @@ using scim::KeyEvent;
  */
 class PinyinIME
 {
-    DecodingInfo *m_dec_info;
     ImeState::State m_ime_state;
+    DecodingInfo *m_dec_info;
     CandidateView *m_cand_view;
     ComposingView *m_cmps_view;
     GooglePyInstance *m_pinyin;
