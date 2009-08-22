@@ -14,6 +14,7 @@ googlepinyin_la_SOURCES = decoding_info.cpp \
                           pinyin_util.cpp \
                           candidate_view.cpp \
                           composing_view.cpp \
+                          function_keys.cpp \
                           google_imengine.cpp
 
 

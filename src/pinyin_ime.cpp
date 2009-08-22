@@ -13,9 +13,13 @@
 using namespace scim;
 
 PinyinIME::PinyinIME(DecodingInfo *dec_info,
-                     FunctionKeys *func_keys)
-    : m_dec_info(dec_info), m_func_keys(func_keys)
-{}
+                     FunctionKeys *func_keys,
+                     GooglePyInstance *pinyin)
+    : m_dec_info(dec_info), m_func_keys(func_keys), m_pinyin(pinyin)
+{
+    m_cand_view = new CandidateView(m_pinyin, m_dec_info);
+    m_cmps_view = new ComposingView(m_pinyin, m_dec_info);
+}
 
 bool
 PinyinIME::process_key(const KeyEvent& key)
@@ -26,6 +30,10 @@ PinyinIME::process_key(const KeyEvent& key)
         trigger_input_mode();
         return true;
     }
+    m_func_keys->remember_last_key(key);
+
+    if (key.is_key_release()) return true;
+    
     if (is_chinese_mode()) {
         return process_in_chinese(key);
     } else {

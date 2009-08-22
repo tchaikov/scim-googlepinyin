@@ -17,6 +17,8 @@ public:
     FunctionKeys();
     bool is_mode_switch_key(const KeyEvent&) const;
     bool is_full_width_punct_key(const KeyEvent&) const;
+    void remember_last_key(const KeyEvent&);
+    
 private:
     bool match_key_event(const std::vector<KeyEvent>& , const KeyEvent& ) const;
 };

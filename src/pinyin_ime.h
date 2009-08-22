@@ -37,7 +37,7 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
-    PinyinIME(DecodingInfo *, FunctionKeys *);
+    PinyinIME(DecodingInfo *, FunctionKeys *, GooglePyInstance *);
     bool process_key(const KeyEvent& key);
     void set_candidate_page_size(unsigned page_size);
     /**

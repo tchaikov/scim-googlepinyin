@@ -105,6 +105,7 @@ public:
     using IMEngineInstanceBase::update_aux_string;
     void refresh_preedit_string(const wstring&, const AttributeList&);
     void refresh_preedit_caret(int);
+    void refresh_lookup_table();
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);

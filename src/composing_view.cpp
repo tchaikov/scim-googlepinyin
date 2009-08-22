@@ -4,6 +4,11 @@
 #include "composing_view.h"
 #include "decoding_info.h"
 
+ComposingView::ComposingView(GooglePyInstance *pinyin,
+                             DecodingInfo *dec_info)
+    : m_pinyin(pinyin), m_dec_info(dec_info)
+{}
+
 ComposingView::Status
 ComposingView::get_status() const
 {

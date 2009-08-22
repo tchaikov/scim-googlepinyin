@@ -17,9 +17,11 @@ class DecodingInfo;
  */
 class ComposingView
 {
-    
 public:
-        /**
+    ComposingView(GooglePyInstance *, 
+                  DecodingInfo *);
+
+    /**
      * <p>
      * There are three statuses for the composing view.
      * </p>

@@ -139,7 +139,7 @@ GooglePyFactory::init ()
                                   String("usr_dict.dat"));
     SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::init()\n";
     SCIM_DEBUG_IMENGINE (3) << "sys_dict_path = " << sys_dict_path << "\n";
-    SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << sys_dict_path << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << usr_dict_path << "\n";
     m_decoder_service = new PinyinDecoderService(sys_dict_path,
                                                  usr_dict_path);
     return m_decoder_service->is_initialized();
@@ -230,7 +230,7 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
     m_dec_info = new DecodingInfo(decoder_service);
-    m_pinyin_ime = new PinyinIME(m_dec_info, func_keys);
+    m_pinyin_ime = new PinyinIME(m_dec_info, func_keys, this);
     m_lookup_table = new PinyinLookupTable(m_dec_info, 10);
     m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
@@ -254,8 +254,6 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
         key.layout << ")\n";
         
     if (!m_focused) return false;
-    
-    if (key.is_key_release ()) return true;
     
     return ( try_cancel(key) ||
              try_process_key(key) );
@@ -390,6 +388,12 @@ void
 GooglePyInstance::refresh_preedit_caret(int caret)
 {
     update_preedit_caret(caret);
+}
+
+void
+GooglePyInstance::refresh_lookup_table()
+{
+    update_lookup_table(*m_lookup_table);
 }
 
 void

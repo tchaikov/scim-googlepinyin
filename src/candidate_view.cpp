@@ -96,7 +96,7 @@ CandidateView::show_page(int page_no, int cand_in_page, bool enable_active_highl
     m_page_no = page_no;
     m_cand_in_page = cand_in_page;
     m_active_highlight = enable_active_highlight;
-    m_pinyin->update_lookup_table(*m_lookup_table);
+    m_pinyin->refresh_lookup_table();
     set_visibility(true);
 }
 
