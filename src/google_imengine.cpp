@@ -28,6 +28,7 @@
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
 #include "pinyin_ime.h"
+#include "function_keys.h"
 #include "google_imengine.h"
 
 
@@ -44,7 +45,7 @@
 #endif
 
 #ifndef SCIM_GOOGLEPINYIN_ICON_FILE
-    #define SCIM_GOOGLEPINYIN_ICON_FILE       (SCIM_ICONDIR "/googlepinyin_logo.xpm")
+    #define SCIM_GOOGLEPINYIN_ICON_FILE       (SCIM_ICONDIR "/google-pinyin_icon.png")
 #endif
 
 #define SCIM_FULL_LETTER_ICON              (SCIM_ICONDIR "/full-letter.png")
@@ -118,6 +119,7 @@ GooglePyFactory::GooglePyFactory (const ConfigPointer &config)
     set_languages ("zh_CN");
     m_name = utf8_mbstowcs ("GooglePinyin");
     m_valid = init ();
+    m_func_keys = new FunctionKeys();
     m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &GooglePyFactory::reload_config));
 }
 
@@ -126,15 +128,18 @@ GooglePyFactory::init ()
 {
     String sys_dict_path =  String(SCIM_GOOGLEPINYIN_DATADIR) +
                             String(SCIM_PATH_DELIM_STRING) +
-                            String("py_dict.dat");
+                            String("dict_pinyin.dat");
     String user_data_directory = String(scim_get_home_dir () +
                                         String (SCIM_PATH_DELIM_STRING) +
                                         String (".scim") + 
                                         String (SCIM_PATH_DELIM_STRING) +
-                                        String ("google"));
+                                        String ("google-pinyin"));
     String usr_dict_path = String(user_data_directory +
                                   String(SCIM_PATH_DELIM_STRING) +
                                   String("usr_dict.dat"));
+    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::init()\n";
+    SCIM_DEBUG_IMENGINE (3) << "sys_dict_path = " << sys_dict_path << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << sys_dict_path << "\n";
     m_decoder_service = new PinyinDecoderService(sys_dict_path,
                                                  usr_dict_path);
     return m_decoder_service->is_initialized();
@@ -145,6 +150,7 @@ GooglePyFactory::~GooglePyFactory ()
     SCIM_DEBUG_IMENGINE (3) << "~GooglePyFactory()\n";
     m_reload_signal_connection.disconnect ();
     delete m_decoder_service;
+    delete m_func_keys;
 }
 
 WideString
@@ -203,7 +209,7 @@ IMEngineInstancePointer
 GooglePyFactory::create_instance (const String& encoding, int id)
 {
     SCIM_DEBUG_IMENGINE (3) <<  "GooglePyFactory::create_instance(" << id << ")\n";    
-    return new GooglePyInstance (this, m_decoder_service, encoding, id);
+    return new GooglePyInstance (this, m_decoder_service, m_func_keys, encoding, id);
 }
 
 void
@@ -215,6 +221,7 @@ GooglePyFactory::reload_config (const ConfigPointer &config)
 // implementation of GooglePyInstance
 GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
                                     PinyinDecoderService *decoder_service,
+                                    FunctionKeys *func_keys,
                                     const String& encoding,
                                     int id)
     : IMEngineInstanceBase (factory, encoding, id),
@@ -223,7 +230,7 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
     m_dec_info = new DecodingInfo(decoder_service);
-    m_pinyin_ime = new PinyinIME(m_dec_info);
+    m_pinyin_ime = new PinyinIME(m_dec_info, func_keys);
     m_lookup_table = new PinyinLookupTable(m_dec_info, 10);
     m_reload_signal_connection = factory->m_config->signal_connect_reload (slot (this, &GooglePyInstance::reload_config));
     init_lookup_table_labels ();
@@ -246,7 +253,7 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
         key.mask << ", " <<
         key.layout << ")\n";
         
-    if (m_focused) return false;
+    if (!m_focused) return false;
     
     if (key.is_key_release ()) return true;
     
@@ -264,6 +271,7 @@ GooglePyInstance::move_preedit_caret (unsigned int pos)
 void
 GooglePyInstance::select_candidate (unsigned int item)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "(" << item << ")\n";
     m_pinyin_ime->choose_candidate_in_page(item);
 }
 
@@ -279,6 +287,7 @@ GooglePyInstance::update_lookup_table_page_size (unsigned int page_size)
 void
 GooglePyInstance::lookup_table_page_up ()
 {
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "()\n";
     m_pinyin_ime->candidate_page_up();
     update_lookup_table(*m_lookup_table);
 }
@@ -286,6 +295,7 @@ GooglePyInstance::lookup_table_page_up ()
 void
 GooglePyInstance::lookup_table_page_down ()
 {
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "()\n";
     m_pinyin_ime->candidate_page_down();
     update_lookup_table(*m_lookup_table);
 }
@@ -295,12 +305,14 @@ void
 GooglePyInstance::reset ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reset()\n";
-    // m_pinyin_ime->reset_to_idle_state();
+    m_pinyin_ime->reset();
+    m_lookup_table->clear();
     
     hide_lookup_table ();
     hide_preedit_string ();
     hide_aux_string ();
-    //refresh_all_properties ();
+    
+    refresh_all_properties ();
 }
 
 void
@@ -313,6 +325,9 @@ GooglePyInstance::focus_in ()
     
     hide_preedit_string ();
     hide_aux_string ();
+    if (m_pinyin_ime->is_chinese_mode()) {
+        m_pinyin_ime->redraw();
+    }
     
     init_lookup_table_labels ();
 }
@@ -330,7 +345,7 @@ GooglePyInstance::trigger_property (const String &property)
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": trigger_property(" << property << ")\n";
     
     if (property == SCIM_PROP_STATUS) {
-        
+        m_pinyin_ime->trigger_input_mode();
     } else if (property == SCIM_PROP_LETTER) {
         
     } else if (property == SCIM_PROP_PUNCT) {
@@ -360,15 +375,21 @@ GooglePyInstance::initialize_all_properties ()
 }
 
 void
-GooglePyInstance::refresh_aux_string(const wstring& aux,
-                                     const AttributeList& attrs)
+GooglePyInstance::refresh_preedit_string(const wstring& preedit,
+                                         const AttributeList& attrs)
 {
-    if (!aux.empty()) {
-        update_aux_string(aux, attrs);
-        show_aux_string();
+    if (!preedit.empty()) {
+        update_preedit_string(preedit, attrs);
+        show_preedit_string();
     } else {
-        hide_aux_string();
+        hide_preedit_string();
     }
+}
+
+void
+GooglePyInstance::refresh_preedit_caret(int caret)
+{
+    update_preedit_caret(caret);
 }
 
 void

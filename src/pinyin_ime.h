@@ -6,6 +6,8 @@
 class DecodingInfo;
 class CandidateView;
 class ComposingView;
+class GooglePyInstance;
+class FunctionKeys;
 
 namespace scim {
     struct KeyEvent;
@@ -21,6 +23,9 @@ class PinyinIME
     ImeState::State m_ime_state;
     CandidateView *m_cand_view;
     ComposingView *m_cmps_view;
+    GooglePyInstance *m_pinyin;
+    FunctionKeys *m_func_keys;
+    
     enum InputMode {
         INPUT_CHINESE,
         INPUT_ENGLISH
@@ -32,7 +37,7 @@ class PinyinIME
     size_t m_candidate_index;
     
 public:
-    PinyinIME(DecodingInfo *);
+    PinyinIME(DecodingInfo *, FunctionKeys *);
     bool process_key(const KeyEvent& key);
     void set_candidate_page_size(unsigned page_size);
     /**
@@ -41,6 +46,10 @@ public:
     void choose_candidate_in_page(unsigned pos);
     void candidate_page_up();
     void candidate_page_down();
+    void trigger_input_mode();
+    bool is_chinese_mode() const;
+    void reset();
+    void redraw();
     
 private:
     bool process_in_chinese(const KeyEvent& key);

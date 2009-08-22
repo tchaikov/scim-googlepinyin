@@ -12,6 +12,8 @@ class DecodingInfo;
 /**
  * View used to show composing string (The Pinyin string for the unselected
  * syllables and the Chinese string for the selected syllables.)
+ *
+ * it is kind of combination of scim pinyin's preedit and aux views
  */
 class ComposingView
 {

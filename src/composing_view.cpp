@@ -66,6 +66,8 @@ ComposingView::draw_for_pinyin()
     AttributeList attrs;
     wstring aux;
     wstring item;
+    int caret_pos = -1;
+    
     item = cmps_str.substr(0, cmps_pos);
     attrs.push_back(
         Attribute(aux.length(), item.length(),
@@ -74,6 +76,9 @@ ComposingView::draw_for_pinyin()
     aux += L" ";
     
     if (cursor_pos <= active_cmps_len) {
+        if (m_status == EDIT_PINYIN) {
+            caret_pos = aux.length();
+        }
         item = cmps_str.substr(cmps_pos, active_cmps_len);
         attrs.push_back(
             Attribute(aux.length(), item.length(),
@@ -90,13 +95,18 @@ ComposingView::draw_for_pinyin()
             attrs.push_back(Attribute(aux.length(), item.length()));
             aux += item;
             aux += L" ";
+            if (m_status == EDIT_PINYIN) {
+                caret_pos = aux.length();
+            }
+            
             orig_pos = cursor_pos;
         }
         item = cmps_str.substr(orig_pos);
         attrs.push_back(Attribute(aux.length(), item.length(),
                                   SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_NONE));
     }
-    m_pinyin->refresh_aux_string(aux, attrs);
+    m_pinyin->refresh_preedit_string(aux, attrs);
+    m_pinyin->refresh_preedit_caret(caret_pos);
 }
 
 void
@@ -109,7 +119,7 @@ ComposingView::draw_for_english()
     aux = m_dec_info->get_original_spl_str();
     attrs.push_back(Attribute(0, aux.length(),
                               SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_HIGHLIGHT));
-    m_pinyin->refresh_aux_string(aux, attrs);
+    m_pinyin->refresh_preedit_string(aux, attrs);
 }
 
 void

@@ -39,6 +39,7 @@ AC_SUBST(SCIM_GOOGLEPINYIN_DATADIR)
 # Check SCIM
 SCIM_VERSION=1.4.0
 AC_SUBST(SCIM_VERSION)
+export PKG_CONFIG_PATH="/opt/scim/lib/pkgconfig:${PKG_CONFIG_PATH}"
 PKG_CHECK_MODULES(SCIM,[scim >= $SCIM_VERSION])
 
 # Check if we should build setup module
@@ -50,11 +51,11 @@ PKG_CHECK_MODULES(SCIM_GTKUTILS,[scim-gtkutils >= $SCIM_VERSION],
 SCIM_ICONDIR=`$PKG_CONFIG --variable=icondir scim`
 SCIM_MODULEDIR=`$PKG_CONFIG --variable=moduledir scim`
 SCIM_DATADIR=`$PKG_CONFIG --variable=scimdatadir scim`
-SCIM_ANDROID_DATADIR=$SCIM_DATADIR/android
+SCIM_GOOGLEPINYIN_DATADIR=$SCIM_DATADIR/googlepinyin
 AC_SUBST(SCIM_ICONDIR)
 AC_SUBST(SCIM_MODULEDIR)
 AC_SUBST(SCIM_DATADIR)
-AC_SUBST(SCIM_ANDROID_DATADIR)
+AC_SUBST(SCIM_GOOGLEPINYIN_DATADIR)
 
 AM_CONDITIONAL(SCIM_BUILD_SETUP, [test "X$SCIM_HAS_GTKUTILS" = "Xyes"])
 
@@ -83,6 +84,7 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS(memset munmap setlocale strdup log2 exp2)
 
 AC_CONFIG_FILES([Makefile 
+                 data/Makefile
                  src/Makefile
                  src/data/Makefile
                  src/share/Makefile

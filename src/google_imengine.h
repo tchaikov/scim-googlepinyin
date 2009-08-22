@@ -13,6 +13,7 @@ class PinyinLookupTable;
 class PinyinDecoderService;
 class DecodingInfo;
 class PinyinIME;
+class FunctionKeys;
 
 class GooglePyFactory : public IMEngineFactoryBase
 {
@@ -22,6 +23,7 @@ class GooglePyFactory : public IMEngineFactoryBase
     Connection          m_reload_signal_connection;
 
     PinyinDecoderService *m_decoder_service;
+    FunctionKeys         *m_func_keys;
     
     friend class GooglePyInstance;
     
@@ -64,7 +66,9 @@ class GooglePyInstance : public IMEngineInstanceBase
     PinyinIME           *m_pinyin_ime;
     
 public:
-    GooglePyInstance(GooglePyFactory *factory, PinyinDecoderService *decoder_service,
+    GooglePyInstance(GooglePyFactory *factory,
+                     PinyinDecoderService *decoder_service,
+                     FunctionKeys *func_keys,
                      const String& encoding, int id);
     virtual ~GooglePyInstance();
     /**
@@ -99,7 +103,8 @@ public:
     using IMEngineInstanceBase::show_preedit_string;
     using IMEngineInstanceBase::hide_preedit_string;
     using IMEngineInstanceBase::update_aux_string;
-    void refresh_aux_string(const wstring&, const AttributeList&);
+    void refresh_preedit_string(const wstring&, const AttributeList&);
+    void refresh_preedit_caret(int);
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);

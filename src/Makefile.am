@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS 	= gnu
-SUBDIRS 		= share
+SUBDIRS 		= share command
 
 MAINTAINERCLEANFILES 	= Makefile.in 
 
@@ -22,7 +22,7 @@ googlepinyin_la_CXXFLAGS = -I$(top_builddir) -I./include \
                            -DSCIM_ICONDIR=\"@SCIM_ICONDIR@\" \
                            -DSCIM_GOOGLEPINYIN_LOCALEDIR=\"$(datadir)/locale\" \
                            -DSCIM_GOOGLEPINYIN_DATADIR=\"@SCIM_GOOGLEPINYIN_DATADIR@\" \
-                           -DSCIM_GOOGLEPINYIN_ICON_FILE=\"@SCIM_ICONDIR@/sunpinyin_logo.xpm\" \
+                           -DSCIM_GOOGLEPINYIN_ICON_FILE=\"@SCIM_ICONDIR@/google-pinyin_icon.png\" \
                            -DENABLE_DEBUG
 
 googlepinyin_la_LDFLAGS = -avoid-version \

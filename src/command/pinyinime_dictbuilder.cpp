@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  success = dict_trie->save_dict("../../res/raw/dict_pinyin.dat");
+  success = dict_trie->save_dict("../../data/dict_pinyin.dat");
 
   if (success) {
     printf("Save dictionary successfully.\n");

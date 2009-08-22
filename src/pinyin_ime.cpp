@@ -5,37 +5,68 @@
 #include "pinyin_ime.h"
 #include "candidate_view.h"
 #include "composing_view.h"
+#include "google_imengine.h"
+#include "function_keys.h"
 #include "pinyin_util.h"
+
 
 using namespace scim;
 
-PinyinIME::PinyinIME(DecodingInfo *dec_info)
-    : m_dec_info(dec_info)
+PinyinIME::PinyinIME(DecodingInfo *dec_info,
+                     FunctionKeys *func_keys)
+    : m_dec_info(dec_info), m_func_keys(func_keys)
 {}
 
 bool
 PinyinIME::process_key(const KeyEvent& key)
 {
     if (m_ime_state == ImeState::STATE_BYPASS) return false;
-    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
-        m_input_mode = !m_input_mode;
-        reset_to_idle_state(false);
+    if (m_func_keys->is_mode_switch_key(key)) {
+        SCIM_DEBUG_IMENGINE (3) << "process_key(space+shift)!\n";
+        trigger_input_mode();
         return true;
     }
-    if (m_input_mode == INPUT_ENGLISH) {
+    if (is_chinese_mode()) {
+        return process_in_chinese(key);
+    } else {
+        // m_input_mode == INPUT_ENGLISH)
+        SCIM_DEBUG_IMENGINE (3) << "process_key(english mode)!\n";
         return false;
     }
-    if (m_input_mode == INPUT_CHINESE) {
-        return process_in_chinese(key);
-    }
-    return false;
 }
 
+void
+PinyinIME::trigger_input_mode()
+{
+    m_input_mode = !m_input_mode;
+    m_pinyin->refresh_status_property(is_chinese_mode());
+    reset_to_idle_state(false);
+}
+
+bool
+PinyinIME::is_chinese_mode() const
+{
+    return m_input_mode == INPUT_CHINESE;
+}
+    
 void
 PinyinIME::set_candidate_page_size(unsigned page_size)
 {
     m_cand_view->set_page_size(page_size);
 }
+
+void
+PinyinIME::reset()
+{
+    reset_to_idle_state();
+}
+
+void
+PinyinIME::redraw()
+{
+    // TODO: redraw all views
+}
+
 
 bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
