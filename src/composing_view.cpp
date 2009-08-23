@@ -6,7 +6,7 @@
 
 ComposingView::ComposingView(GooglePyInstance *pinyin,
                              DecodingInfo *dec_info)
-    : m_pinyin(pinyin), m_dec_info(dec_info)
+    : m_status(SHOW_PINYIN), m_pinyin(pinyin), m_dec_info(dec_info)
 {}
 
 ComposingView::Status

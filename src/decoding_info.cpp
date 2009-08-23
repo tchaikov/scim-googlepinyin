@@ -9,8 +9,9 @@
 DecodingInfo::DecodingInfo(PinyinDecoderService *decoder_service,
                            const ImeState::State& ime_state)
     : m_surface_decoded_len(0),
-      m_pos_del_spl(-1),
       m_decoder_service(decoder_service),
+      m_cursor_pos(0),
+      m_pos_del_spl(-1),
       m_ime_state(ime_state)
 {}
 
@@ -209,8 +210,6 @@ DecodingInfo::choose_decoding_candidate(int cand_id)
 
 void
 DecodingInfo::update_for_search(int n_candidates) {
-    SCIM_DEBUG_IMENGINE (3) << "update_for_search("
-                            << n_candidates << ")\n";
     m_total_choices_num = n_candidates;
     if (m_total_choices_num < 0) {
         m_total_choices_num = 0;
@@ -261,8 +260,6 @@ DecodingInfo::update_for_search(int n_candidates) {
          m_finish_selection = false;
      }
      // Prepare page 0.
-     SCIM_DEBUG_IMENGINE (3) << m_finish_selection
-                             << "\n";
      if (!m_finish_selection) {
          prepare_page(0);
      }
@@ -285,13 +282,9 @@ DecodingInfo::page_ready(int page_no) const
 bool
 DecodingInfo::prepare_page(int page_no)
 {
-    SCIM_DEBUG_IMENGINE (3) << "prepare_page("
-                            << page_no << ")\n";
     // If the page number is less than 0, return false
     if (page_no < 0) return false;
 
-    SCIM_DEBUG_IMENGINE (3) << "m_page_start.size() => "
-                            << m_page_start.size() << "\n";
     // Make sure the starting information for page pageNo is ready.
     if (m_page_start.size() <= page_no) {
         return false;
@@ -302,8 +295,6 @@ DecodingInfo::prepare_page(int page_no)
         return true;
     }
 
-    SCIM_DEBUG_IMENGINE (3) << m_candidates_list.size() << "\n";
-    SCIM_DEBUG_IMENGINE (3) << m_page_start[page_no] << "\n";
     // If cached items is enough for page pageNo.
     if (m_candidates_list.size() - m_page_start[page_no] >= MAX_PAGE_SIZE_DISPLAY) {
         return true;
@@ -368,7 +359,6 @@ DecodingInfo::get_candidates_number() const
 void
 DecodingInfo::get_candidates_for_cache()
 {
-    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     int fetch_start = m_candidates_list.size();
     int fetch_size = m_total_choices_num - fetch_start;
     if (fetch_size > MAX_PAGE_SIZE_DISPLAY) {
@@ -377,17 +367,14 @@ DecodingInfo::get_candidates_for_cache()
 
     list<wstring> new_list;
 
-    SCIM_DEBUG_IMENGINE (3) << "m_ime_state = " << m_ime_state << "\n";
     if (ImeState::STATE_INPUT == m_ime_state ||
         ImeState::STATE_IDLE == m_ime_state ||
         ImeState::STATE_COMPOSING == m_ime_state) {
         new_list = m_decoder_service->get_choice_list(
             fetch_start, fetch_size, m_fixed_len);
-        SCIM_DEBUG_IMENGINE (3) << new_list.size() << " candidates gotten\n";
     } else if (ImeState::STATE_PREDICT == m_ime_state) {
         new_list = m_decoder_service->get_predict_list(
             fetch_start, fetch_size);
-        SCIM_DEBUG_IMENGINE (3) << new_list.size() << " predicts gotten\n";
     }
     copy(new_list.begin(), new_list.end(), std::back_inserter(m_candidates_list));
 }
@@ -420,7 +407,6 @@ int
 DecodingInfo::get_cursor_pos_in_cmps() const
 {
     int cursor_pos = m_cursor_pos;
-    int fixed_len = 0;
 
     for (int hz_pos = 0; hz_pos < m_fixed_len; hz_pos++) {
         if (m_cursor_pos >= m_spl_start[hz_pos + 2]) {

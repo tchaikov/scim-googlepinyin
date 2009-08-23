@@ -16,7 +16,7 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
                      FunctionKeys *func_keys,
                      GooglePyInstance *pinyin)
     : m_ime_state(ImeState::STATE_IDLE),
-      m_func_keys(func_keys), m_pinyin(pinyin)
+      m_pinyin(pinyin), m_func_keys(func_keys)
 {
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
     m_cmps_view = new ComposingView(m_pinyin, m_dec_info);
@@ -119,9 +119,9 @@ bool
 PinyinIME::process_state_input(const KeyEvent& key)
 {
     char ch = key.get_ascii_code();
-    if (ch >= 'a' && ch <= 'z' ||
-        ch == '\'' && !m_dec_info->char_before_cursor_is_separator() ||
-        key.code == SCIM_KEY_Delete) {
+    if ( (ch >= 'a' && ch <= 'z') ||
+         (ch == '\'' && !m_dec_info->char_before_cursor_is_separator()) ||
+         key.code == SCIM_KEY_BackSpace) {
         return process_surface_change(key);
     }
     else if (ch == ',' || ch == '.' ) {
@@ -224,7 +224,7 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
 bool
 PinyinIME::process_surface_change(const KeyEvent& key)
 {
-    if (m_dec_info->is_spl_str_full() && key.code != SCIM_KEY_Delete) {
+    if (m_dec_info->is_spl_str_full() && key.code != SCIM_KEY_BackSpace) {
         return true;
     }
     char ch = key.get_ascii_code();
@@ -235,7 +235,7 @@ PinyinIME::process_surface_change(const KeyEvent& key)
           m_ime_state == ImeState::STATE_COMPOSING)) {
         m_dec_info->add_spl_char(ch, false);
         choose_and_update(-1);
-    } else if (key.code == SCIM_KEY_Delete) {
+    } else if (key.code == SCIM_KEY_BackSpace) {
         m_dec_info->prepare_delete_before_cursor();
         choose_and_update(-1);
     }
