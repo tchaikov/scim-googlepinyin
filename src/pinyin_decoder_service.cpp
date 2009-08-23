@@ -54,6 +54,12 @@ PinyinDecoderService::reset_search()
     im_reset_search();
 }
 
+size_t
+PinyinDecoderService::del_search(size_t pos, bool is_pos_in_splid, bool clear_fixed_this_step)
+{
+    return im_delsearch(pos, is_pos_in_splid, clear_fixed_this_step);
+}
+
 int
 PinyinDecoderService::choose(int choice)
 {
