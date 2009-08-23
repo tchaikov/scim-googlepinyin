@@ -62,7 +62,6 @@ class GooglePyInstance : public IMEngineInstanceBase
     bool                 m_focused;
     bool                 m_forward;
 
-    DecodingInfo        *m_dec_info;
     PinyinIME           *m_pinyin_ime;
     
 public:

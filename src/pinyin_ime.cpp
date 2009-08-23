@@ -39,7 +39,6 @@ PinyinIME::process_key(const KeyEvent& key)
         return process_in_chinese(key);
     } else {
         // m_input_mode == INPUT_ENGLISH)
-        SCIM_DEBUG_IMENGINE (3) << "process_key(english mode)\n";
         return false;
     }
 }
@@ -48,7 +47,6 @@ void
 PinyinIME::trigger_input_mode()
 {
     m_input_mode = !m_input_mode;
-    SCIM_DEBUG_IMENGINE (3) << "trigger_input_mode(" << m_input_mode << ")\n";
     m_pinyin->refresh_status_property(is_chinese_mode());
     reset_to_idle_state(false);
 }
@@ -104,7 +102,6 @@ PinyinIME::process_in_chinese(const KeyEvent& key)
 bool
 PinyinIME::process_state_idle(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' && !key.is_alt_down()) {
         m_dec_info->add_spl_char(ch, true);
@@ -121,7 +118,6 @@ PinyinIME::process_state_idle(const KeyEvent& key)
 bool
 PinyinIME::process_state_input(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' ||
         ch == '\'' && !m_dec_info->char_before_cursor_is_separator() ||
@@ -163,7 +159,6 @@ PinyinIME::process_state_input(const KeyEvent& key)
 bool
 PinyinIME::process_state_predict(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     // In this status, when user presses keys in [a..z], the status will
     // change to input state.
     char ch = key.get_ascii_code();
@@ -201,7 +196,6 @@ PinyinIME::process_state_predict(const KeyEvent& key)
 bool
 PinyinIME::process_state_edit_composing(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) << __PRETTY_FUNCTION__ << "\n";
     if (key.code == SCIM_KEY_Down) {
         if (!m_dec_info->selection_finished()) {
             change_to_state_input(true);
@@ -293,8 +287,6 @@ PinyinIME::candidate_page_down()
 void
 PinyinIME::choose_and_update(int cand_id)
 {
-    SCIM_DEBUG_IMENGINE (3) << "choose_and_update(" << cand_id
-                            << ")\n";
     if (m_input_mode != INPUT_CHINESE) {
         wstring choice = m_dec_info->get_candidate(cand_id);
         if (!choice.empty()) {

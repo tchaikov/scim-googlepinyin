@@ -243,7 +243,6 @@ GooglePyInstance::~GooglePyInstance ()
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << ": ~GooglePyInstance()\n";
     m_reload_signal_connection.disconnect ();
     delete m_lookup_table;
-    delete m_dec_info;
     delete m_pinyin_ime;
 }
 
@@ -305,7 +304,7 @@ GooglePyInstance::lookup_table_page_down ()
 void
 GooglePyInstance::reset ()
 {
-    SCIM_DEBUG_IMENGINE (3) << get_id() << ": reset()\n";
+    //SCIM_DEBUG_IMENGINE (3) << get_id() << ": reset()\n";
     m_pinyin_ime->reset();
     m_lookup_table->clear();
     

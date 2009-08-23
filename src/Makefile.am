@@ -24,7 +24,8 @@ googlepinyin_la_CXXFLAGS = -I$(top_builddir) -I./include \
                            -DSCIM_GOOGLEPINYIN_LOCALEDIR=\"$(datadir)/locale\" \
                            -DSCIM_GOOGLEPINYIN_DATADIR=\"@SCIM_GOOGLEPINYIN_DATADIR@\" \
                            -DSCIM_GOOGLEPINYIN_ICON_FILE=\"@SCIM_ICONDIR@/google-pinyin_icon.png\" \
-                           -DENABLE_DEBUG
+                           -DENABLE_DEBUG \
+                           -Wall
 
 googlepinyin_la_LDFLAGS = -avoid-version \
                           -module \

@@ -62,10 +62,10 @@ ComposingView::redraw()
 void
 ComposingView::draw_for_pinyin()
 {
-    int cursor_pos = m_dec_info->get_cursor_pos_in_cmps_display();
+    size_t cursor_pos = m_dec_info->get_cursor_pos_in_cmps_display();
     int cmps_pos = cursor_pos;
     wstring cmps_str = m_dec_info->get_composing_str_for_display();
-    int active_cmps_len = m_dec_info->get_active_cmps_display_len();
+    size_t active_cmps_len = m_dec_info->get_active_cmps_display_len();
     if (cursor_pos > active_cmps_len) cmps_pos = active_cmps_len;
     
     AttributeList attrs;
@@ -78,7 +78,6 @@ ComposingView::draw_for_pinyin()
         Attribute(aux.length(), item.length(),
                   SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_NONE));
     aux += item;
-    aux += L" ";
     
     if (cursor_pos <= active_cmps_len) {
         if (m_status == EDIT_PINYIN) {
@@ -89,7 +88,6 @@ ComposingView::draw_for_pinyin()
             Attribute(aux.length(), item.length(),
                       SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
         aux += item;
-        aux += L" ";
     }
     
     if (cmps_str.length() > active_cmps_len) {
@@ -99,7 +97,6 @@ ComposingView::draw_for_pinyin()
             item = cmps_str.substr(orig_pos, cursor_pos - orig_pos);
             attrs.push_back(Attribute(aux.length(), item.length()));
             aux += item;
-            aux += L" ";
             if (m_status == EDIT_PINYIN) {
                 caret_pos = aux.length();
             }
