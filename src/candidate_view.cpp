@@ -91,6 +91,12 @@ CandidateView::show_candidates(DecodingInfo *dec_info,
 }
 
 void
+CandidateView::redraw()
+{
+    show_page(m_page_no, m_cand_in_page, true);
+}
+
+void
 CandidateView::show_page(int page_no, int cand_in_page, bool enable_active_highlight)
 {
     m_page_no = page_no;

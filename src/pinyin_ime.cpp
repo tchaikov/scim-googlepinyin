@@ -74,7 +74,8 @@ PinyinIME::reset()
 void
 PinyinIME::redraw()
 {
-    // TODO: redraw all views
+    m_cmps_view->redraw();
+    m_cand_view->redraw();
 }
 
 const DecodingInfo*
@@ -262,7 +263,7 @@ PinyinIME::update_composing_text(bool visible)
         m_cmps_view->set_decoding_info(m_dec_info,
                                        m_ime_state);
     }
-    m_cmps_view->set_visibility(false);
+    m_cmps_view->set_visibility(visible);
 }
 
 void
@@ -342,6 +343,7 @@ PinyinIME::choose_and_update(int cand_id)
         }
         show_candidate_window(true);
     }
+    
 }
 
 void

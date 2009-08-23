@@ -39,6 +39,8 @@ public:
 
     AttributeList get_attributes(int index) const;
     void append_candidate(const wstring&);
+
+    void redraw();
     
 private:
     void show_page(int page_no, int cand_in_page, bool enable_active_highlight);

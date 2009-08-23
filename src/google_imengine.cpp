@@ -379,6 +379,7 @@ void
 GooglePyInstance::refresh_preedit_string(const wstring& preedit,
                                          const AttributeList& attrs)
 {
+    SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_preedit_string()\n";
     if (!preedit.empty()) {
         update_preedit_string(preedit, attrs);
         show_preedit_string();
