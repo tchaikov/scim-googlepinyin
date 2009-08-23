@@ -63,6 +63,25 @@ CandidateView::set_visibility(bool visibility)
     }
 }
 
+void
+CandidateView::enable_active_highlight(bool enable)
+{
+    m_active_highlight = enable;
+    // update lookup table
+}
+
+int
+CandidateView::get_current_page() const
+{
+    return m_page_no;
+}
+
+int
+CandidateView::get_active_candidate_pos() const
+{
+    return m_cand_in_page;
+}
+
 int
 CandidateView::get_page_size() const
 {
@@ -73,13 +92,6 @@ void
 CandidateView::set_page_size(int page_size)
 {
     m_page_size = page_size;
-}
-
-void
-CandidateView::enable_active_highlight(bool enable)
-{
-    m_active_highlight = enable;
-    // update lookup table
 }
 
 void

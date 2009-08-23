@@ -65,13 +65,13 @@ private:
     void choose_and_update(int index);
     bool process_surface_change(const KeyEvent& key);
 
-    void reset_to_idle_state(bool);
+    void reset_to_idle_state(bool reset_inline_text=false);
     void change_to_state_composing(bool update_ui);
     void change_to_state_input(bool update_ui);
     void commit_result_text(const wstring& result_text);
     void update_composing_text(bool visible);
-    void input_comma_period(const wstring& pre_edit, char ch, bool dismiss_cand_window);
-    void reset_to_idle_state();
+    void input_comma_period(wstring pre_edit, char ch,
+                            bool dismiss_cand_window, ImeState::State next_state);
     void show_candidate_window(bool show_composing_view);
     void dismiss_candidate_window();
     void reset_candidate_window();

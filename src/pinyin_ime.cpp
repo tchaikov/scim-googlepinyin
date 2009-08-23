@@ -126,7 +126,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
     }
     else if (ch == ',' || ch == '.' ) {
         input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
-                           ch, true);
+                           ch, true, ImeState::STATE_IDLE);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
         return m_cand_view->cursor_left();
@@ -168,7 +168,7 @@ PinyinIME::process_state_predict(const KeyEvent& key)
         choose_and_update(-1);
     } else if (ch == ',' || ch == '.' ) {
         input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
-                           ch, true);
+                           ch, true, ImeState::STATE_IDLE);
         return true;
     } else if (key.code == SCIM_KEY_Left) {
         return m_cand_view->cursor_left();
@@ -355,6 +355,23 @@ PinyinIME::change_to_state_composing(bool)
     m_ime_state = ImeState::STATE_COMPOSING;
 }
 
+void
+PinyinIME::input_comma_period(wstring pre_edit, char ch,
+                              bool dismiss_cand_window, ImeState::State next_state)
+{
+    if (ch == ',') {
+        pre_edit += L",";
+    } else if (ch == '.') {
+        pre_edit += L".";
+    } else {
+        return;
+    }
+    commit_result_text(pre_edit);
+    if (dismiss_cand_window) reset_candidate_window();
+    m_ime_state = next_state;
+}
+
+    
 void
 PinyinIME::reset_to_idle_state(bool)
 {
