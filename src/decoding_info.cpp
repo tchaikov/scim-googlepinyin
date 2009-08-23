@@ -147,10 +147,14 @@ DecodingInfo::reset_candidates()
 void
 DecodingInfo::calculate_page(int page_no, CandidateView* cand_view)
 {
+    // If the size of page exists, only calculate the extra margin.
+    bool only_extra_margin = false;
     int from_page = m_page_start.size() - 1;
-    if (m_page_start.size() > page_no - 1)
-        return;
-
+    if (from_page > page_no) {
+        only_extra_margin = true;
+        from_page = page_no;
+    }
+    
     const int cand_size = m_candidates_list.size();
     const int page_size = cand_view->get_page_size();
     for (int p = from_page; p <= page_no; p++) {
@@ -162,7 +166,8 @@ DecodingInfo::calculate_page(int page_no, CandidateView* cand_view)
             cand_view->append_candidate(item_str);
             p_size++;
         }
-        m_page_start.push_back(p_start + p_size);
+        if (!only_extra_margin)
+            m_page_start.push_back(p_start + p_size);
     }
 }
 

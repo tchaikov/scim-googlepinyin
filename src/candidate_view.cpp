@@ -49,8 +49,6 @@ CandidateView::page_down()
     if (!m_dec_info->prepare_page(m_page_no + 1)) {
         return false;
     }
-    // XXX: always highlight
-    
     show_page(m_page_no + 1, m_cand_in_page, m_active_highlight);
     m_pinyin->page_down();
     return true;
