@@ -410,5 +410,6 @@ PinyinIME::reset_candidate_window()
 {
     m_dec_info->reset_candidates();
     show_candidate_window(false);
+    m_cand_view->set_visibility(false);
 }
 
