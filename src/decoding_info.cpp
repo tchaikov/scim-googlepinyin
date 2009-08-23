@@ -245,7 +245,7 @@ DecodingInfo::update_for_search(int n_candidates) {
          for (int pos = m_fixed_len + 1; pos < m_spl_start.size() - 1; ++pos) {
              m_composing_str_display +=
                  str2wstr(m_surface.substr(m_spl_start[pos],
-                                           m_spl_start[pos + 1]));
+                                           m_spl_start[pos + 1] - m_spl_start[pos]));
              if (m_spl_start[pos + 1] < m_surface_decoded_len) {
                  m_composing_str_display += L" ";
              }

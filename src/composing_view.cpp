@@ -84,7 +84,7 @@ ComposingView::draw_for_pinyin()
         if (m_status == EDIT_PINYIN) {
             caret_pos = aux.length();
         }
-        item = cmps_str.substr(cmps_pos, active_cmps_len);
+        item = cmps_str.substr(cmps_pos, active_cmps_len - cmps_pos);
         attrs.push_back(
             Attribute(aux.length(), item.length(),
                       SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
@@ -96,7 +96,7 @@ ComposingView::draw_for_pinyin()
         int orig_pos = active_cmps_len;
         if (cursor_pos > active_cmps_len) {
             if (cursor_pos > cmps_str.length()) cursor_pos = cmps_str.length();
-            item = cmps_str.substr(orig_pos, cursor_pos);
+            item = cmps_str.substr(orig_pos, cursor_pos - orig_pos);
             attrs.push_back(Attribute(aux.length(), item.length()));
             aux += item;
             aux += L" ";
