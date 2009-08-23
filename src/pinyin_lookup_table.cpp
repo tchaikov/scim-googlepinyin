@@ -45,7 +45,7 @@ PinyinLookupTable::get_candidate (int index) const
 {
     // the start point should be synced
     SCIM_DEBUG_IMENGINE  (3) <<  "get_candidate(" << index << ")\n";
-    m_dec_info->get_candidate(index);
+    return m_dec_info->get_candidate(index);
 }
 
 AttributeList

@@ -15,8 +15,6 @@ class PinyinLookupTable : public LookupTable
     PinyinLookupTable (const PinyinLookupTable &);
     const PinyinLookupTable & operator= (const PinyinLookupTable &);
 
-    uint32 m_total;
-    
 public:
     PinyinLookupTable(const DecodingInfo *decoding_info,
                       int page_size = 10);
