@@ -6,12 +6,34 @@ FunctionKeys::FunctionKeys()
     m_mode_switch_keys.push_back (KeyEvent (SCIM_KEY_Shift_R, SCIM_KEY_AltMask | SCIM_KEY_ReleaseMask));
     m_mode_switch_keys.push_back (KeyEvent (SCIM_KEY_Shift_L, SCIM_KEY_ShiftMask | SCIM_KEY_ReleaseMask));
     m_mode_switch_keys.push_back (KeyEvent (SCIM_KEY_Shift_R, SCIM_KEY_ShiftMask | SCIM_KEY_ReleaseMask));
+
+    m_page_up_keys.push_back (KeyEvent (SCIM_KEY_comma, 0));
+    m_page_up_keys.push_back (KeyEvent (SCIM_KEY_minus, 0));
+    m_page_up_keys.push_back (KeyEvent (SCIM_KEY_bracketleft, 0));
+    m_page_up_keys.push_back (KeyEvent (SCIM_KEY_Page_Up, 0));
+
+    m_page_down_keys.push_back (KeyEvent (SCIM_KEY_period, 0));
+    m_page_down_keys.push_back (KeyEvent (SCIM_KEY_equal, 0));
+    m_page_down_keys.push_back (KeyEvent (SCIM_KEY_bracketright, 0));
+    m_page_down_keys.push_back (KeyEvent (SCIM_KEY_Page_Down, 0));
 }
 
 bool
 FunctionKeys::is_mode_switch_key(const KeyEvent& key) const
 {
     return match_key_event(m_mode_switch_keys, key);
+}
+
+bool
+FunctionKeys::is_page_up_key(const KeyEvent& key) const
+{
+    return match_key_event(m_page_up_keys, key);
+}
+
+bool
+FunctionKeys::is_page_down_key(const KeyEvent& key) const
+{
+    return match_key_event(m_page_down_keys, key);
 }
 
 void

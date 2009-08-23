@@ -98,17 +98,17 @@ public:
     using IMEngineInstanceBase::commit_string;
     using IMEngineInstanceBase::show_lookup_table;
     using IMEngineInstanceBase::hide_lookup_table;
-    using IMEngineInstanceBase::update_lookup_table;
     using IMEngineInstanceBase::show_preedit_string;
     using IMEngineInstanceBase::hide_preedit_string;
-    using IMEngineInstanceBase::update_aux_string;
     void refresh_preedit_string(const wstring&, const AttributeList&);
     void refresh_preedit_caret(int);
     void refresh_lookup_table();
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);
-
+    void page_up();
+    void page_down();
+    
 private:
     void init_lookup_table_labels ();
     void reload_config (const ConfigPointer &config);

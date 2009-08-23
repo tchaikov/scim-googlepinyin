@@ -356,6 +356,12 @@ DecodingInfo::get_candidates_number() const
     return m_total_choices_num;
 }
 
+bool
+DecodingInfo::is_candidates_list_empty() const
+{
+    return m_candidates_list.empty();
+}
+
 void
 DecodingInfo::get_candidates_for_cache()
 {
@@ -423,7 +429,7 @@ DecodingInfo::get_cursor_pos_in_cmps() const
 void
 DecodingInfo::move_cursor(int offset)
 {
-    assert(offset >= -1 && offset >= 1);
+    assert(offset >= -1 && offset <= 1);
     
     if (offset != 0) {
         int hz_pos = 0;

@@ -187,6 +187,7 @@ private:
 public:
     /* page table */
     size_t get_candidates_number() const;
+    bool is_candidates_list_empty() const;
     void calculate_page(int page_no, CandidateView*);
     /* XXX: should be get_page_size */
     size_t get_current_page_size(int current_page) const;

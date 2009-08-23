@@ -132,13 +132,13 @@ PinyinIME::process_state_input(const KeyEvent& key)
         return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Right) {
         return m_cand_view->cursor_right();
-    } else if (key.code == SCIM_KEY_Up) {
+    } else if (m_func_keys->is_page_up_key(key)) {
         if (!m_cand_view->page_up()) {
             m_cand_view->enable_active_highlight(false);
             change_to_state_composing(true);
             update_composing_text(true);
         }
-    } else if (key.code == SCIM_KEY_Down) {
+    } else if (m_func_keys->is_page_down_key(key)) {
         return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;
@@ -174,9 +174,9 @@ PinyinIME::process_state_predict(const KeyEvent& key)
         return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Right) {
         return m_cand_view->cursor_right();
-    } else if (key.code == SCIM_KEY_Up) {
+    } else if (m_func_keys->is_page_up_key(key)) {
         m_cand_view->page_up();
-    } else if (key.code == SCIM_KEY_Down) {
+    } else if (m_func_keys->is_page_down_key(key)) {
         return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
         int active_pos = key.code - SCIM_KEY_1;

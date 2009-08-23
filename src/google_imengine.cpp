@@ -289,7 +289,6 @@ GooglePyInstance::lookup_table_page_up ()
 {
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "()\n";
     m_pinyin_ime->candidate_page_up();
-    update_lookup_table(*m_lookup_table);
 }
 
 void
@@ -297,7 +296,6 @@ GooglePyInstance::lookup_table_page_down ()
 {
     SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "()\n";
     m_pinyin_ime->candidate_page_down();
-    update_lookup_table(*m_lookup_table);
 }
 
 
@@ -337,6 +335,20 @@ GooglePyInstance::focus_out ()
 {
     SCIM_DEBUG_IMENGINE(3) << get_id() << ": focus_out ()\n";
     m_focused = false;
+}
+
+void
+GooglePyInstance::page_up ()
+{
+    m_lookup_table->page_up();
+    update_lookup_table(*m_lookup_table);
+}
+
+void
+GooglePyInstance::page_down ()
+{
+    m_lookup_table->page_down();
+    update_lookup_table(*m_lookup_table);
 }
 
 void

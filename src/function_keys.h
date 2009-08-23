@@ -11,11 +11,15 @@ using namespace scim;
 class FunctionKeys
 {
     std::vector<KeyEvent> m_mode_switch_keys;
+    std::vector<KeyEvent> m_page_up_keys;
+    std::vector<KeyEvent> m_page_down_keys;
     KeyEvent m_prev_key;
     
 public:
     FunctionKeys();
     bool is_mode_switch_key(const KeyEvent&) const;
+    bool is_page_up_key(const KeyEvent&) const;
+    bool is_page_down_key(const KeyEvent&) const;
     bool is_full_width_punct_key(const KeyEvent&) const;
     void remember_last_key(const KeyEvent&);
     
