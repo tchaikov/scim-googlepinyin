@@ -18,9 +18,9 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
     : m_ime_state(ImeState::STATE_IDLE),
       m_pinyin(pinyin), m_func_keys(func_keys)
 {
+    m_dec_info = new DecodingInfo(decoder_service, m_ime_state);
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
     m_cmps_view = new ComposingView(m_pinyin, m_dec_info);
-    m_dec_info = new DecodingInfo(decoder_service, m_ime_state);
 }
 
 bool

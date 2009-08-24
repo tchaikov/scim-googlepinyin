@@ -413,7 +413,8 @@ DecodingInfo::get_cursor_pos_in_cmps_display() const
     // +2 is because: one for mSplStart[0], which is used for other
     // purpose (The length of the segmentation string), and another
     // for the first spelling which does not need a space before it.
-    for (int pos = m_fixed_len + 2; pos < m_spl_start.size() - 1; pos++) {
+    // cast to int in case m_spl_start is empty
+    for (int pos = m_fixed_len + 2; pos < (int) m_spl_start.size() - 1; pos++) {
         if (m_cursor_pos <= m_spl_start[pos]) {
             break;
         } else {
