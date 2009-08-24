@@ -1,5 +1,5 @@
-#ifndef SUNPINYIN_IMENGINE_H
-#define SUNPINYIN_IMENGINE_H
+#ifndef GOOGLEPINYIN_IMENGINE_H
+#define GOOGLEPINYIN_IMENGINE_H
 
 #include <string>
 #define Uses_SCIM_IMENGINE
@@ -106,8 +106,10 @@ public:
     void refresh_status_property(bool cn);
     void refresh_fullsimbol_property(bool full);
     void refresh_fullpunc_property(bool full);
-    void page_up();
-    void page_down();
+    void lookup_page_up();
+    void lookup_page_down();
+    void lookup_cursor_left();
+    void lookup_cursor_right();
     
 private:
     void init_lookup_table_labels ();
@@ -118,10 +120,7 @@ private:
     bool try_cancel(const KeyEvent& key);
     bool try_switch_cn(const KeyEvent& key);
     bool try_process_key(const KeyEvent& key);
-
-    void lookup_page_up();
-    void lookup_page_down();
 };
 
 // emacs: -*- c++-mode -*-
-#endif//SUNPINYIN_IMENGINE_H
+#endif //GOOGLEPINYIN_IMENGINE_H

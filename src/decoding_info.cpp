@@ -9,6 +9,7 @@
 DecodingInfo::DecodingInfo(PinyinDecoderService *decoder_service,
                            const ImeState::State& ime_state)
     : m_surface_decoded_len(0),
+      m_fixed_len(0),
       m_decoder_service(decoder_service),
       m_cursor_pos(0),
       m_pos_del_spl(-1),
@@ -226,7 +227,7 @@ DecodingInfo::update_for_search(int n_candidates) {
     
     m_full_sent = m_decoder_service->get_choice(0);
     m_fixed_len = m_decoder_service->get_fixed_len();
-    
+    SCIM_DEBUG_IMENGINE (3) <<  "m_fixed_len = " << m_fixed_len << "\n";
     // Update the surface string to the one kept by engine.
     m_surface.swap(py_str);
 
@@ -289,9 +290,11 @@ DecodingInfo::prepare_page(int page_no)
 {
     // If the page number is less than 0, return false
     if (page_no < 0) return false;
-
+    
     // Make sure the starting information for page pageNo is ready.
     if (m_page_start.size() <= page_no) {
+        SCIM_DEBUG_IMENGINE (1) << "===== prepare_page 1(" << page_no << ", "
+                                << m_page_start.size() << ")\n";
         return false;
     }
     
@@ -311,6 +314,8 @@ DecodingInfo::prepare_page(int page_no)
     // Try to find if there are available new items to display.
     // If no new item, return false;
     if (m_page_start[page_no] >= m_candidates_list.size()) {
+        SCIM_DEBUG_IMENGINE (1) << "===== prepare_page 2(" << page_no << ", "
+                                << m_candidates_list.size() << ")\n";
         return false;
     }
     
@@ -349,7 +354,10 @@ DecodingInfo::get_candidate(int cand_id) const
 {
     // Only loaded items can be gotten, so we use mCandidatesList.size()
     // instead mTotalChoiceNum.
-    if (cand_id < 0 || cand_id > m_candidates_list.size()) {
+    SCIM_DEBUG_IMENGINE (3) << "get_candidate(" << cand_id << ")\n";
+    if (cand_id < 0 || cand_id >= m_candidates_list.size()) {
+        SCIM_DEBUG_IMENGINE (1) << "candidate size = "
+                                << m_candidates_list.size() << "\n";        
         return wstring();
     }
     return m_candidates_list[cand_id];
@@ -370,6 +378,7 @@ DecodingInfo::is_candidates_list_empty() const
 void
 DecodingInfo::get_candidates_for_cache()
 {
+    SCIM_DEBUG_IMENGINE (2) << "get_candidates_for_cache()\n";
     int fetch_start = m_candidates_list.size();
     int fetch_size = m_total_choices_num - fetch_start;
     if (fetch_size > MAX_PAGE_SIZE_DISPLAY) {
@@ -418,7 +427,7 @@ int
 DecodingInfo::get_cursor_pos_in_cmps() const
 {
     int cursor_pos = m_cursor_pos;
-
+    
     for (int hz_pos = 0; hz_pos < m_fixed_len; hz_pos++) {
         if (m_cursor_pos >= m_spl_start[hz_pos + 2]) {
             cursor_pos -= m_spl_start[hz_pos + 2] - m_spl_start[hz_pos + 1];
@@ -478,7 +487,7 @@ DecodingInfo::get_current_page_start(int current_page) const
 }
 
 bool
-DecodingInfo::page_forwardable(int current_page) const
+DecodingInfo::page_forwardable(size_t current_page) const
 {
     if (m_page_start.size() <= current_page + 1) return false;
     if (m_page_start[current_page + 1] >= m_total_choices_num) {
@@ -488,7 +497,7 @@ DecodingInfo::page_forwardable(int current_page) const
 }
 
 bool
-DecodingInfo::page_backwardable(int current_page) const
+DecodingInfo::page_backwardable(size_t current_page) const
 {
     if (current_page > 0) return true;
     return false;

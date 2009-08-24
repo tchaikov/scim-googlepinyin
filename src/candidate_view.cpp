@@ -8,15 +8,25 @@ CandidateView::CandidateView(GooglePyInstance *pinyin, DecodingInfo *dec_info)
       m_dec_info(dec_info),
       m_page_no(-1),
       m_cand_in_page(0),
-      m_page_size(10),
+      m_page_size(9),
       m_active_highlight(true)
 {}
 
 bool
 CandidateView::cursor_left()
 {
+    SCIM_DEBUG_IMENGINE (2) << "cursor_left()\n";
+    return (cursor_back() ||
+            page_up());
+}
+
+bool
+CandidateView::cursor_back()
+{
     if (m_cand_in_page > 0) {
         show_page(m_page_no, m_cand_in_page - 1, true);
+        m_pinyin->lookup_cursor_left();
+        set_visibility(true);
         return true;
     }
     return false;
@@ -25,9 +35,23 @@ CandidateView::cursor_left()
 bool
 CandidateView::cursor_right()
 {
+    SCIM_DEBUG_IMENGINE (2) << "cursor_right()\n";
+    return (cursor_forward() ||
+            page_down());
+}
+
+bool
+CandidateView::cursor_forward()
+{
     if (!m_dec_info->page_ready(m_page_no)) return false;
+    SCIM_DEBUG_IMENGINE (2) << "cursor_forward()\n";
+    SCIM_DEBUG_IMENGINE (2) << m_cand_in_page+1 << ","
+                            << m_dec_info->get_current_page_size(m_page_no)
+                            << "\n";
     if (m_cand_in_page + 1 < m_dec_info->get_current_page_size(m_page_no)) {
         show_page(m_page_no, m_cand_in_page + 1, true);
+        m_pinyin->lookup_cursor_right();
+        set_visibility(true);
         return true;
     }
     return false;
@@ -39,18 +63,21 @@ CandidateView::page_up()
     if (m_page_no == 0) return false;
     // XXX: always highlight
     show_page(m_page_no - 1, m_cand_in_page, m_active_highlight);
-    m_pinyin->page_up();
+    m_pinyin->lookup_page_up();
     return true;
 }
 
 bool
 CandidateView::page_down()
 {
+    SCIM_DEBUG_IMENGINE (3) << "CandidateView::page_down()\n";
     if (!m_dec_info->prepare_page(m_page_no + 1)) {
+        SCIM_DEBUG_IMENGINE (1) << "============= prepare_page(" << m_page_no+1
+                                << ") failed\n";
         return false;
     }
     show_page(m_page_no + 1, m_cand_in_page, m_active_highlight);
-    m_pinyin->page_down();
+    m_pinyin->lookup_page_down();
     return true;
 }
 

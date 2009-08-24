@@ -43,6 +43,8 @@ public:
     void redraw();
     
 private:
+    bool cursor_back();
+    bool cursor_forward();
     void show_page(int page_no, int cand_in_page, bool enable_active_highlight);
     
 private:
@@ -50,7 +52,7 @@ private:
     PinyinLookupTable *m_lookup_table;
     DecodingInfo *m_dec_info;
     int m_page_no;
-    int m_cand_in_page;
+    size_t m_cand_in_page;
     int m_page_size;
     
     /**

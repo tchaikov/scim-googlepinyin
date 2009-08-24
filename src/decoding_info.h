@@ -192,8 +192,8 @@ public:
     /* XXX: should be get_page_size */
     size_t get_current_page_size(int current_page) const;
     size_t get_current_page_start(int current_page) const;
-    bool page_forwardable(int current_page) const;
-    bool page_backwardable(int current_page) const;
+    bool page_forwardable(size_t current_page) const;
+    bool page_backwardable(size_t current_page) const;
     bool page_ready(int page_no) const;
     
 public:

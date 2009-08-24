@@ -20,6 +20,9 @@ public:
                       int page_size = 10);
     ~PinyinLookupTable();
     virtual WideString get_candidate (int index) const;
+    /**
+     * @param index global offset
+     */
     virtual AttributeList get_attributes (int index) const;
     virtual uint32 number_of_candidates () const;
     virtual void clear();

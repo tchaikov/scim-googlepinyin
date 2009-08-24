@@ -231,7 +231,7 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
     m_pinyin_ime = new PinyinIME(decoder_service, func_keys, this);
     m_lookup_table = new PinyinLookupTable(m_pinyin_ime->get_decoding_info(),
-                                           10);
+                                           9);
     m_reload_signal_connection =
         factory->m_config->signal_connect_reload (
             slot (this, &GooglePyInstance::reload_config));
@@ -264,14 +264,14 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
 void
 GooglePyInstance::move_preedit_caret (unsigned int pos)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "(" << pos << ")\n";
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << "move_preedit_caret(" << pos << ")\n";
 }
 
 // item is the in-page index
 void
 GooglePyInstance::select_candidate (unsigned int item)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  get_id() << __PRETTY_FUNCTION__ << "(" << item << ")\n";
+    SCIM_DEBUG_IMENGINE (3) <<  get_id() << "select_candidate(" << item << ")\n";
     m_pinyin_ime->choose_candidate_in_page(item);
 }
 
@@ -338,17 +338,29 @@ GooglePyInstance::focus_out ()
 }
 
 void
-GooglePyInstance::page_up ()
+GooglePyInstance::lookup_page_up ()
 {
     m_lookup_table->page_up();
     update_lookup_table(*m_lookup_table);
 }
 
 void
-GooglePyInstance::page_down ()
+GooglePyInstance::lookup_page_down ()
 {
     m_lookup_table->page_down();
     update_lookup_table(*m_lookup_table);
+}
+
+void
+GooglePyInstance::lookup_cursor_left()
+{
+    m_lookup_table->cursor_up();
+}
+
+void
+GooglePyInstance::lookup_cursor_right()
+{
+    m_lookup_table->cursor_down();
 }
 
 void
