@@ -23,6 +23,9 @@ CandidateView::cursor_left()
 bool
 CandidateView::cursor_back()
 {
+    SCIM_DEBUG_IMENGINE (2) << "cursor_back("
+                            << m_page_no << ", "
+                            << (int)m_cand_in_page-1 << ")\n";
     if (m_cand_in_page > 0) {
         show_page(m_page_no, m_cand_in_page - 1, true);
         m_pinyin->lookup_cursor_left();
@@ -43,8 +46,10 @@ CandidateView::cursor_right()
 bool
 CandidateView::cursor_forward()
 {
+    SCIM_DEBUG_IMENGINE (2) << "cursor_forward("
+                            << m_page_no << ", "
+                            << m_cand_in_page+1 << ")\n";
     if (!m_dec_info->page_ready(m_page_no)) return false;
-    SCIM_DEBUG_IMENGINE (2) << "cursor_forward()\n";
     SCIM_DEBUG_IMENGINE (2) << m_cand_in_page+1 << ","
                             << m_dec_info->get_current_page_size(m_page_no)
                             << "\n";
@@ -60,6 +65,8 @@ CandidateView::cursor_forward()
 bool
 CandidateView::page_up()
 {
+    SCIM_DEBUG_IMENGINE (2) << "CandidateView::page_up(" << m_page_no << ", "
+                            << m_cand_in_page << ")\n";
     if (m_page_no == 0) return false;
     // XXX: always highlight
     show_page(m_page_no - 1, m_cand_in_page, m_active_highlight);
@@ -70,7 +77,8 @@ CandidateView::page_up()
 bool
 CandidateView::page_down()
 {
-    SCIM_DEBUG_IMENGINE (3) << "CandidateView::page_down()\n";
+    SCIM_DEBUG_IMENGINE (2) << "CandidateView::page_down(" << m_page_no << ", "
+                            << m_cand_in_page << ")\n";
     if (!m_dec_info->prepare_page(m_page_no + 1)) {
         SCIM_DEBUG_IMENGINE (1) << "============= prepare_page(" << m_page_no+1
                                 << ") failed\n";
@@ -147,6 +155,12 @@ CandidateView::show_page(int page_no, int cand_in_page, bool enable_active_highl
     m_cand_in_page = cand_in_page;
     m_active_highlight = enable_active_highlight;
     m_dec_info->calculate_page(m_page_no, this);
+    if (m_dec_info->get_current_page_size(m_page_no) < m_cand_in_page) {
+        m_cand_in_page = m_dec_info->get_current_page_size(m_page_no) - 1;
+    }
+    SCIM_DEBUG_IMENGINE (2) << "show_page("
+                            << m_page_no << ", "
+                            << m_cand_in_page << ")\n";
     //set_visibility(true);
 }
 

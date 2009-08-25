@@ -59,9 +59,9 @@ PinyinLookupTable::get_attributes (int index) const
 uint32
 PinyinLookupTable::number_of_candidates () const
 {
-    SCIM_DEBUG_IMENGINE (2) << "number_of_candidates() => "
-                            << m_dec_info->get_candidates_number()
-                            << "\n";
+    // SCIM_DEBUG_IMENGINE (2) << "number_of_candidates() => "
+    //                         << m_dec_info->get_candidates_number()
+    //                         << "\n";
     return m_dec_info->get_candidates_number();
 }
 

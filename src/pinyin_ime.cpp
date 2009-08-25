@@ -102,6 +102,7 @@ PinyinIME::process_in_chinese(const KeyEvent& key)
 bool
 PinyinIME::process_state_idle(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "process_state_idle()\n";
     char ch = key.get_ascii_code();
     if (ch >= 'a' && ch <= 'z' && !key.is_alt_down()) {
         m_dec_info->add_spl_char(ch, true);
