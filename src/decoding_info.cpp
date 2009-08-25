@@ -248,12 +248,12 @@ DecodingInfo::update_for_search(int n_candidates) {
      } else {
          m_composing_str_display = m_full_sent.substr(0, m_fixed_len);
          for (int pos = m_fixed_len + 1; pos < m_spl_start.size() - 1; ++pos) {
+             if (pos != 1 && m_spl_start[pos] < m_surface_decoded_len) {
+                 m_composing_str_display += L" ";
+             }
              m_composing_str_display +=
                  str2wstr(m_surface.substr(m_spl_start[pos],
                                            m_spl_start[pos + 1] - m_spl_start[pos]));
-             if (m_spl_start[pos + 1] < m_surface_decoded_len) {
-                 m_composing_str_display += L" ";
-             }
          }
          m_active_cmps_display_len = m_composing_str_display.length();
          if (m_surface_decoded_len < m_surface.length()) {
@@ -410,17 +410,17 @@ int
 DecodingInfo::get_cursor_pos_in_cmps_display() const
 {
     int cursor_pos = get_cursor_pos_in_cmps();
-    // +2 is because: one for mSplStart[0], which is used for other
-    // purpose (The length of the segmentation string), and another
-    // for the first spelling which does not need a space before it.
+    // +1 is because: one for mSplStart[0], which is used for other
+    // purpose (The length of the segmentation string).
     // cast to int in case m_spl_start is empty
-    for (int pos = m_fixed_len + 2; pos < (int) m_spl_start.size() - 1; pos++) {
+    for (int pos = m_fixed_len + 1; pos < (int) m_spl_start.size() - 1; pos++) {
         if (m_cursor_pos <= m_spl_start[pos]) {
             break;
         } else {
             cursor_pos++;
         }
     }
+        
     return cursor_pos;
 }
 
