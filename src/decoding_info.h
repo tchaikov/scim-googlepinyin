@@ -207,7 +207,7 @@ public:
     int get_cursor_pos_in_cmps_display() const;
     bool char_before_cursor_is_separator() const;
     
-private:
+    //private:
     int get_cursor_pos_in_cmps() const;
 };
 

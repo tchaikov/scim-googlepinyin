@@ -62,11 +62,24 @@ ComposingView::redraw()
 void
 ComposingView::draw_for_pinyin()
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "draw_for_pinyin()\n";
+    
     size_t cursor_pos = m_dec_info->get_cursor_pos_in_cmps_display();
     int cmps_pos = cursor_pos;
     wstring cmps_str = m_dec_info->get_composing_str_for_display();
     size_t active_cmps_len = m_dec_info->get_active_cmps_display_len();
     if (cursor_pos > active_cmps_len) cmps_pos = active_cmps_len;
+
+    SCIM_DEBUG_IMENGINE (3) << "get_cursor_pos_in_cmps() = "
+                            << m_dec_info->get_cursor_pos_in_cmps() << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "get_fixed_len() = "
+                            << m_dec_info->get_fixed_len() << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "get_cursor_pos_in_cmps_display() = "
+                            << cursor_pos << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "get_active_cmps_display_len() = "
+                            << active_cmps_len << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "cmps_str.length() = "
+                            << cmps_str.length() << "\n";
     
     AttributeList attrs;
     wstring aux;
@@ -86,7 +99,7 @@ ComposingView::draw_for_pinyin()
         item = cmps_str.substr(cmps_pos, active_cmps_len - cmps_pos);
         attrs.push_back(
             Attribute(aux.length(), item.length(),
-                      SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
+                                  SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
         aux += item;
     }
     
@@ -106,6 +119,7 @@ ComposingView::draw_for_pinyin()
         item = cmps_str.substr(orig_pos);
         attrs.push_back(Attribute(aux.length(), item.length(),
                                   SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_NONE));
+        aux += item;
     }
     m_pinyin->refresh_preedit_string(aux, attrs);
     m_pinyin->refresh_preedit_caret(caret_pos);
@@ -114,6 +128,7 @@ ComposingView::draw_for_pinyin()
 void
 ComposingView::draw_for_english()
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "draw_for_english()\n";
     AttributeList attrs;
     wstring aux;
     wstring item;

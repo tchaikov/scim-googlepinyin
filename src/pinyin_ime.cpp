@@ -16,7 +16,9 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
                      FunctionKeys *func_keys,
                      GooglePyInstance *pinyin)
     : m_ime_state(ImeState::STATE_IDLE),
-      m_pinyin(pinyin), m_func_keys(func_keys)
+      m_pinyin(pinyin),
+      m_func_keys(func_keys),
+      m_input_mode(INPUT_CHINESE)
 {
     m_dec_info = new DecodingInfo(decoder_service, m_ime_state);
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
@@ -26,6 +28,7 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
 bool
 PinyinIME::process_key(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) << "process_key() " << m_ime_state << "\n";
     if (m_ime_state == ImeState::STATE_BYPASS) return false;
     if (m_func_keys->is_mode_switch_key(key)) {
         trigger_input_mode();
@@ -129,9 +132,9 @@ PinyinIME::process_state_input(const KeyEvent& key)
         input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
                            ch, true, ImeState::STATE_IDLE);
         return true;
-    } else if (key.code == SCIM_KEY_Left) {
+    } else if (key.code == SCIM_KEY_Up) {
         return m_cand_view->cursor_left();
-    } else if (key.code == SCIM_KEY_Right) {
+    } else if (key.code == SCIM_KEY_Down) {
         return m_cand_view->cursor_right();
     } else if (m_func_keys->is_page_up_key(key)) {
         if (!m_cand_view->page_up()) {
