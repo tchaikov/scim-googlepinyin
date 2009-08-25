@@ -34,6 +34,8 @@ ComposingView::set_visibility(bool visible)
 void
 ComposingView::move_cursor(int offset)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "ComposingView::move_cursor("
+                            << offset << ")\n";
     if (m_status == EDIT_PINYIN) {
         m_dec_info->move_cursor(offset);
     } else if (m_status == SHOW_STRING_LOWERCASE) {
@@ -99,7 +101,7 @@ ComposingView::draw_for_pinyin()
         item = cmps_str.substr(cmps_pos, active_cmps_len - cmps_pos);
         attrs.push_back(
             Attribute(aux.length(), item.length(),
-                                  SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_REVERSE));
+                                  SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_HIGHLIGHT));
         aux += item;
     }
     

@@ -114,7 +114,7 @@ DecodingInfo::get_composing_str_for_display() const
 int
 DecodingInfo::get_active_cmps_display_len() const
 {
-    return m_active_cmps_len;
+    return m_active_cmps_display_len;
 }
 
 wstring
@@ -448,7 +448,7 @@ DecodingInfo::move_cursor(int offset)
     
     if (offset != 0) {
         int hz_pos = 0;
-        for (hz_pos = 0; hz_pos <= m_fixed_len; hz_pos++) {
+        for (hz_pos = 0; hz_pos <= m_spl_start.size()-2; hz_pos++) {
             if (m_cursor_pos == m_spl_start[hz_pos + 1]) {
                 if (offset < 0) {
                     if (hz_pos > 0) {
@@ -465,6 +465,10 @@ DecodingInfo::move_cursor(int offset)
             }
         }
     }
+    SCIM_DEBUG_IMENGINE (3) << "DecodingInfo::move_cursor() => "
+                            << "m_cursor_pos = " << m_cursor_pos << ", "
+                            << "offset = " << offset << "\n";
+    
     m_cursor_pos += offset;
     if (m_cursor_pos < 0) {
         m_cursor_pos = 0;
