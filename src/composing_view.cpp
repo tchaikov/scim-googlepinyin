@@ -101,7 +101,7 @@ ComposingView::draw_for_pinyin()
         item = cmps_str.substr(cmps_pos, active_cmps_len - cmps_pos);
         attrs.push_back(
             Attribute(aux.length(), item.length(),
-                                  SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_HIGHLIGHT));
+                      SCIM_ATTR_DECORATE, SCIM_ATTR_DECORATE_HIGHLIGHT));
         aux += item;
     }
     

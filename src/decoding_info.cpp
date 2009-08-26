@@ -409,10 +409,12 @@ DecodingInfo::move_cursor_to_edge(bool left)
 int
 DecodingInfo::get_cursor_pos_in_cmps_display() const
 {
-    int cursor_pos = get_cursor_pos_in_cmps();
+    const int cursor_pos_in_cmps = get_cursor_pos_in_cmps();
+    int cursor_pos = cursor_pos_in_cmps;
     // +1 is because: one for mSplStart[0], which is used for other
     // purpose (The length of the segmentation string).
     // cast to int in case m_spl_start is empty
+    
     for (int pos = m_fixed_len + 1; pos < (int) m_spl_start.size() - 1; pos++) {
         if (m_cursor_pos <= m_spl_start[pos]) {
             break;
@@ -420,7 +422,10 @@ DecodingInfo::get_cursor_pos_in_cmps_display() const
             cursor_pos++;
         }
     }
-        
+    if (cursor_pos > cursor_pos_in_cmps && m_fixed_len == 0) {
+        // remove the space after the non-existing fixed string
+        return cursor_pos - 1;
+    }
     return cursor_pos;
 }
 
@@ -452,11 +457,18 @@ DecodingInfo::move_cursor(int offset)
             if (m_cursor_pos == m_spl_start[hz_pos + 1]) {
                 if (offset < 0) {
                     if (hz_pos > 0) {
+                        SCIM_DEBUG_IMENGINE (3) << "offset = "
+                                                << m_spl_start[hz_pos] - m_spl_start[hz_pos + 1]
+                                                << "\n";
                         offset = m_spl_start[hz_pos] -
                                  m_spl_start[hz_pos + 1];
                     }
                 } else {
-                    if (hz_pos < m_spl_start.size() - 2) {
+                     SCIM_DEBUG_IMENGINE (3) << "offset = "
+                                             << m_spl_start[hz_pos + 2] - m_spl_start[hz_pos + 1]
+                                             << "\n";
+
+                    if (hz_pos < m_fixed_len) {
                         offset = m_spl_start[hz_pos + 2] -
                                  m_spl_start[hz_pos + 1];
                     }
