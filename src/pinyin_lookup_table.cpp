@@ -72,3 +72,4 @@ PinyinLookupTable::clear()
     LookupTable::clear();
     // TODO
 }
+

@@ -427,6 +427,8 @@ void
 GooglePyInstance::refresh_all_properties ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_all_properties()\n";
+    refresh_status_property(m_pinyin_ime->is_chinese_mode());
+    // TODO: letter and punct property
 }
 
 
@@ -434,9 +436,6 @@ void
 GooglePyInstance::refresh_status_property(bool cn)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_status_property(" << cn << ")\n";
-    if (!cn) {
-        reset();
-    }
     _status_property.set_label(cn ? "中" : "英");
     update_property(_status_property);
 }
