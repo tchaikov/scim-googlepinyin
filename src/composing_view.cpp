@@ -86,7 +86,7 @@ ComposingView::draw_for_pinyin()
     AttributeList attrs;
     wstring aux;
     wstring item;
-    int caret_pos = -1;
+    int caret_pos = cursor_pos;
     
     item = cmps_str.substr(0, cmps_pos);
     attrs.push_back(

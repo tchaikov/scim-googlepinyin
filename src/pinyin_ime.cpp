@@ -242,8 +242,11 @@ PinyinIME::process_surface_change(const KeyEvent& key)
     } else if (key.code == SCIM_KEY_BackSpace) {
         m_dec_info->prepare_delete_before_cursor();
         choose_and_update(-1);
+    } else if (key.code == SCIM_KEY_Delete) {
+        m_dec_info->prepare_delete_after_cursor();
+        choose_and_update(-1);
     }
-    
+
     return true;
 }
 

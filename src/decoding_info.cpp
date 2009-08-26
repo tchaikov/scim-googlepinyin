@@ -74,6 +74,26 @@ DecodingInfo::prepare_delete_before_cursor()
     }
 }
 
+void
+DecodingInfo::prepare_delete_after_cursor()
+{
+    if (m_cursor_pos < m_surface.length()) {
+        for (int pos = 0; pos < m_fixed_len; pos++) {
+            if (m_spl_start[pos + 2] >= m_cursor_pos &&
+                m_spl_start[pos + 1] < m_cursor_pos) {
+                m_pos_del_spl = pos;
+                m_cursor_pos = m_spl_start[pos + 1];
+                m_is_pos_in_spl = true;
+                break;
+            }
+        }
+        if (m_pos_del_spl < 0) {
+            m_pos_del_spl = m_cursor_pos;
+            m_is_pos_in_spl = false;
+        }
+    }
+}
+
 int
 DecodingInfo::length() const
 {

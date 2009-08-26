@@ -147,6 +147,7 @@ public:
      * This function only marks the position used to delete.
      */
     void prepare_delete_before_cursor();
+    void prepare_delete_after_cursor();
     
     wstring get_original_spl_str() const;
     
