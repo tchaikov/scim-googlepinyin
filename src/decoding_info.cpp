@@ -456,7 +456,7 @@ DecodingInfo::move_cursor(int offset)
                                  m_spl_start[hz_pos + 1];
                     }
                 } else {
-                    if (hz_pos < m_fixed_len) {
+                    if (hz_pos < m_spl_start.size() - 2) {
                         offset = m_spl_start[hz_pos + 2] -
                                  m_spl_start[hz_pos + 1];
                     }

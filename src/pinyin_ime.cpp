@@ -136,12 +136,12 @@ PinyinIME::process_state_input(const KeyEvent& key)
         return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Down) {
         return m_cand_view->cursor_right();
+    } else if (key.code == SCIM_KEY_Left) {
+        m_cand_view->enable_active_highlight(false);
+        change_to_state_composing(true);
+        update_composing_text(true);
     } else if (m_func_keys->is_page_up_key(key)) {
-        if (!m_cand_view->page_up()) {
-            m_cand_view->enable_active_highlight(false);
-            change_to_state_composing(true);
-            update_composing_text(true);
-        }
+        return m_cand_view->page_up();
     } else if (m_func_keys->is_page_down_key(key)) {
         return m_cand_view->page_down();
     } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
