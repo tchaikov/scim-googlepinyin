@@ -34,13 +34,23 @@ ComposingView::set_visibility(bool visible)
 void
 ComposingView::move_cursor(int offset)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  "ComposingView::move_cursor("
+    SCIM_DEBUG_IMENGINE (3) << "ComposingView::move_cursor("
                             << offset << ")\n";
     if (m_status == EDIT_PINYIN) {
         m_dec_info->move_cursor(offset);
     } else if (m_status == SHOW_STRING_LOWERCASE) {
         m_status = EDIT_PINYIN;
     }
+    invalidate();
+}
+
+void
+ComposingView::move_cursor_to_edge(bool left)
+{
+    SCIM_DEBUG_IMENGINE (3) << "ComposingView::move_cursor_to_edge("
+                            << left << ")\n";
+
+    m_dec_info->move_cursor_to_edge(left);
     invalidate();
 }
 
@@ -156,12 +166,7 @@ ComposingView::set_decoding_info(DecodingInfo *dec_info,
         m_status = SHOW_PINYIN;
         m_dec_info->move_cursor_to_edge(false);
     } else {
-        if (dec_info->get_fixed_len() != 0 ||
-            m_status == EDIT_PINYIN) {
-            m_status = EDIT_PINYIN;
-        } else {
-            m_status = SHOW_STRING_LOWERCASE;
-        }
+        m_status = EDIT_PINYIN;
         m_dec_info->move_cursor(0);
     }
     invalidate();

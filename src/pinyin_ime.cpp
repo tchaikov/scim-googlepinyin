@@ -88,6 +88,8 @@ PinyinIME::get_decoding_info() const
 bool
 PinyinIME::process_in_chinese(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "process_in_chinese("
+                            << m_ime_state << ")\n";
     switch (m_ime_state) {
     case ImeState::STATE_IDLE:
         return process_state_idle(key);
@@ -122,6 +124,7 @@ PinyinIME::process_state_idle(const KeyEvent& key)
 bool
 PinyinIME::process_state_input(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "process_state_input()\n";
     char ch = key.get_ascii_code();
     if ( (ch >= 'a' && ch <= 'z') ||
          (ch == '\'' && !m_dec_info->char_before_cursor_is_separator()) ||
@@ -140,6 +143,11 @@ PinyinIME::process_state_input(const KeyEvent& key)
         m_cand_view->enable_active_highlight(false);
         change_to_state_composing(true);
         update_composing_text(true);
+    } else if (key.code == SCIM_KEY_Home) {
+        m_cand_view->enable_active_highlight(false);
+        change_to_state_composing(true);
+        update_composing_text(true);
+        m_cmps_view->move_cursor_to_edge(true);
     } else if (m_func_keys->is_page_up_key(key)) {
         return m_cand_view->page_up();
     } else if (m_func_keys->is_page_down_key(key)) {
@@ -149,7 +157,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
         choose_candidate_in_page(active_pos);
         return true;
     } else if (key.code == SCIM_KEY_Return) {
-        commit_result_text(m_dec_info->get_original_spl_str());
+        commit_result_text(m_dec_info->get_composing_str());
         reset_to_idle_state();
         return true;
     } else if (key.code == SCIM_KEY_space) {
@@ -200,25 +208,22 @@ PinyinIME::process_state_predict(const KeyEvent& key)
 bool
 PinyinIME::process_state_edit_composing(const KeyEvent& key)
 {
+    SCIM_DEBUG_IMENGINE (3) <<  "process_state_input()\n";
     if (key.code == SCIM_KEY_Down) {
         if (!m_dec_info->selection_finished()) {
             change_to_state_input(true);
         }
     } else if (key.code == SCIM_KEY_Home) {
-        // TODO
+        m_cmps_view->move_cursor_to_edge(true);
     } else if (key.code == SCIM_KEY_End) {
-        // TODO
+        m_cmps_view->move_cursor_to_edge(false);
     } else if (key.code == SCIM_KEY_Left) {
         m_cmps_view->move_cursor(-1);
     } else if (key.code == SCIM_KEY_Right) {
         m_cmps_view->move_cursor(1);
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
-        if (m_cmps_view->get_status() == ComposingView::SHOW_STRING_LOWERCASE) {
-            commit_result_text(m_dec_info->get_original_spl_str());
-        } else {
-            commit_result_text(m_dec_info->get_composing_str());
-        }
+        commit_result_text(m_dec_info->get_composing_str());
     } else {
         return process_surface_change(key);
     }

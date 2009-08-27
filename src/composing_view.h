@@ -65,6 +65,7 @@ public:
     void reset();
     void set_visibility(bool visible);
     void move_cursor(int offset);
+    void move_cursor_to_edge(bool left);
     void set_decoding_info(DecodingInfo *dec_info, ImeState::State ime_status);
     void redraw();
     
