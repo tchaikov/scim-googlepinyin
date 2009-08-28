@@ -2,12 +2,12 @@
 #define Uses_SCIM_IMENGINE
 #include <scim.h>
 #include "decoding_info.h"
+#include "pinyin_util.h"
 #include "pinyin_ime.h"
 #include "candidate_view.h"
 #include "composing_view.h"
 #include "google_imengine.h"
 #include "function_keys.h"
-#include "pinyin_util.h"
 
 
 using namespace scim;
@@ -52,6 +52,20 @@ PinyinIME::trigger_input_mode()
     m_input_mode = !m_input_mode;
     m_pinyin->refresh_status_property(is_chinese_mode());
     reset_to_idle_state(false);
+}
+
+void
+PinyinIME::trigger_punct_width()
+{
+    m_half2full.toggle_punct_width();
+    m_pinyin->refresh_punct_property(m_half2full.is_full_punct());
+}
+
+void
+PinyinIME::trigger_letter_width()
+{
+    m_half2full.toggle_letter_width();
+    m_pinyin->refresh_letter_property(m_half2full.is_full_letter());
 }
 
 bool
@@ -113,7 +127,10 @@ PinyinIME::process_state_idle(const KeyEvent& key)
         m_dec_info->add_spl_char(ch, true);
         choose_and_update(-1);
         return true;
+    } else if (ispunct(ch)) {
+        return commit_char(ch);
     }
+    
     if (key.code == SCIM_KEY_Delete) {
         // XXX may need forward this key to upper level
         return false;
@@ -255,10 +272,25 @@ PinyinIME::process_surface_change(const KeyEvent& key)
     return true;
 }
 
+bool
+PinyinIME::commit_char(char punct)
+{
+    if (m_half2full.is_full_letter() ||
+        m_half2full.is_full_punct()) {
+        SCIM_DEBUG_IMENGINE (3) << "commit_result_text() == full_letter or full_punct\n";
+        commit_result_text(m_half2full(punct));
+        return true;
+    }
+    return false;
+}
+
 void
 PinyinIME::commit_result_text(const wstring& result_text)
 {
-    m_pinyin->commit_string(result_text);
+    wstring text(result_text);
+    
+    
+    m_pinyin->commit_string(text);
     m_cmps_view->set_visibility(false);
 }
 

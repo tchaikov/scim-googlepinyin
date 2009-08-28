@@ -2,12 +2,14 @@
 #define PINYIN_IME_H
 
 #include "ime_state.h"
+#include "pinyin_util.h"
 
 class PinyinDecoderService;
 class CandidateView;
 class ComposingView;
 class GooglePyInstance;
 class FunctionKeys;
+class HalfToFullConverter;
 
 namespace scim {
     struct KeyEvent;
@@ -25,6 +27,7 @@ class PinyinIME
     ComposingView *m_cmps_view;
     GooglePyInstance *m_pinyin;
     FunctionKeys *m_func_keys;
+    HalfToFullConverter m_half2full;
     
     enum InputMode {
         INPUT_CHINESE,
@@ -47,6 +50,8 @@ public:
     void candidate_page_up();
     void candidate_page_down();
     void trigger_input_mode();
+    void trigger_punct_width();
+    void trigger_letter_width();
     bool is_chinese_mode() const;
     void reset();
     void redraw();
@@ -69,6 +74,7 @@ private:
     void change_to_state_composing(bool update_ui);
     void change_to_state_input(bool update_ui);
     void commit_result_text(const wstring& result_text);
+    bool commit_char(char);
     void update_composing_text(bool visible);
     void input_comma_period(wstring pre_edit, char ch,
                             bool dismiss_cand_window, ImeState::State next_state);

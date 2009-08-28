@@ -13,6 +13,7 @@ class FunctionKeys
     std::vector<KeyEvent> m_mode_switch_keys;
     std::vector<KeyEvent> m_page_up_keys;
     std::vector<KeyEvent> m_page_down_keys;
+    std::vector<KeyEvent> m_full_width_punct_keys;
     KeyEvent m_prev_key;
     
 public:

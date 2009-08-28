@@ -104,8 +104,8 @@ public:
     void refresh_preedit_caret(int);
     void refresh_lookup_table();
     void refresh_status_property(bool cn);
-    void refresh_fullsimbol_property(bool full);
-    void refresh_fullpunc_property(bool full);
+    void refresh_letter_property(bool full);
+    void refresh_punct_property(bool full);
     void lookup_page_up();
     void lookup_page_down();
     void lookup_cursor_left();

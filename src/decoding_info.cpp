@@ -267,7 +267,7 @@ DecodingInfo::update_for_search(int n_candidates) {
          m_active_cmps_display_len = m_composing_str.length();
      } else {
          m_composing_str_display = m_full_sent.substr(0, m_fixed_len);
-         for (int pos = m_fixed_len + 1; pos < m_spl_start.size() - 1; ++pos) {
+         for (int pos = m_fixed_len + 1; pos < (int)m_spl_start.size() - 1; ++pos) {
              if (pos != 1 && m_spl_start[pos] < m_surface_decoded_len) {
                  m_composing_str_display += L" ";
              }
@@ -473,7 +473,7 @@ DecodingInfo::move_cursor(int offset)
     
     if (offset != 0) {
         int hz_pos = 0;
-        for (hz_pos = 0; hz_pos <= m_spl_start.size()-2; hz_pos++) {
+        for (hz_pos = 0; hz_pos <= (int)m_spl_start.size()-2; hz_pos++) {
             if (m_cursor_pos == m_spl_start[hz_pos + 1]) {
                 if (offset < 0) {
                     if (hz_pos > 0) {

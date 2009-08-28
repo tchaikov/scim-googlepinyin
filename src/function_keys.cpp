@@ -16,6 +16,8 @@ FunctionKeys::FunctionKeys()
     m_page_down_keys.push_back (KeyEvent (SCIM_KEY_equal, 0));
     m_page_down_keys.push_back (KeyEvent (SCIM_KEY_bracketright, 0));
     m_page_down_keys.push_back (KeyEvent (SCIM_KEY_Page_Down, 0));
+
+    m_full_width_punct_keys.push_back(KeyEvent (SCIM_KEY_comma, SCIM_KEY_ControlMask));
 }
 
 bool
@@ -34,6 +36,12 @@ bool
 FunctionKeys::is_page_down_key(const KeyEvent& key) const
 {
     return match_key_event(m_page_down_keys, key);
+}
+
+bool
+FunctionKeys::is_full_width_punct_key(const KeyEvent& key) const
+{
+    return match_key_event(m_full_width_punct_keys, key);
 }
 
 void

@@ -371,9 +371,9 @@ GooglePyInstance::trigger_property (const String &property)
     if (property == SCIM_PROP_STATUS) {
         m_pinyin_ime->trigger_input_mode();
     } else if (property == SCIM_PROP_LETTER) {
-        
+        m_pinyin_ime->trigger_letter_width();
     } else if (property == SCIM_PROP_PUNCT) {
-        
+        m_pinyin_ime->trigger_punct_width();
     }
 }
 
@@ -441,17 +441,18 @@ GooglePyInstance::refresh_status_property(bool cn)
 }
 
 void
-GooglePyInstance::refresh_fullsimbol_property(bool full)
+GooglePyInstance::refresh_letter_property(bool full)
 {
-    SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_fullsimbol_property(" << full << ")\n";
+    SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_letter_property(" << full << ")\n";
     _letter_property.set_icon(
         full ? SCIM_FULL_LETTER_ICON : SCIM_HALF_LETTER_ICON);
     update_property(_letter_property);
 }
 
 void
-GooglePyInstance::refresh_fullpunc_property(bool full)
+GooglePyInstance::refresh_punct_property(bool full)
 {
+    SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_punct_property(" << full << ")\n";
     _punct_property.set_icon(
         full ? SCIM_FULL_PUNCT_ICON : SCIM_HALF_PUNCT_ICON);
     update_property(_punct_property);
