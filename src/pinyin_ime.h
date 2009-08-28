@@ -53,6 +53,8 @@ public:
     void trigger_punct_width();
     void trigger_letter_width();
     bool is_chinese_mode() const;
+    bool is_full_punct() const;
+    bool is_full_letter() const;
     void reset();
     void redraw();
     /**

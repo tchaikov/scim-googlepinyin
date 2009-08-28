@@ -428,7 +428,8 @@ GooglePyInstance::refresh_all_properties ()
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": refresh_all_properties()\n";
     refresh_status_property(m_pinyin_ime->is_chinese_mode());
-    // TODO: letter and punct property
+    refresh_letter_property(m_pinyin_ime->is_full_letter());
+    refresh_punct_property(m_pinyin_ime->is_full_punct());
 }
 
 

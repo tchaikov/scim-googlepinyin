@@ -18,7 +18,8 @@ PinyinIME::PinyinIME(PinyinDecoderService *decoder_service,
     : m_ime_state(ImeState::STATE_IDLE),
       m_pinyin(pinyin),
       m_func_keys(func_keys),
-      m_input_mode(INPUT_CHINESE)
+      m_input_mode(INPUT_CHINESE),
+      m_candidate_index(0)
 {
     m_dec_info = new DecodingInfo(decoder_service, m_ime_state);
     m_cand_view = new CandidateView(m_pinyin, m_dec_info);
@@ -73,7 +74,19 @@ PinyinIME::is_chinese_mode() const
 {
     return m_input_mode == INPUT_CHINESE;
 }
-    
+
+bool
+PinyinIME::is_full_punct() const
+{
+    return m_half2full.is_full_punct();
+}
+
+bool
+PinyinIME::is_full_letter() const
+{
+    return m_half2full.is_full_letter();
+}
+
 void
 PinyinIME::set_candidate_page_size(unsigned page_size)
 {
@@ -195,7 +208,7 @@ PinyinIME::process_state_predict(const KeyEvent& key)
         change_to_state_input(true);
         m_dec_info->add_spl_char(ch, true);
         choose_and_update(-1);
-    } else if (ch == ',' || ch == '.' ) {
+    } else if (ispunct(ch)) {
         input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
                            ch, true, ImeState::STATE_IDLE);
         return true;
@@ -403,10 +416,8 @@ void
 PinyinIME::input_comma_period(wstring pre_edit, char ch,
                               bool dismiss_cand_window, ImeState::State next_state)
 {
-    if (ch == ',') {
-        pre_edit += L",";
-    } else if (ch == '.') {
-        pre_edit += L".";
+    if (ispunct(ch)) {
+        pre_edit += m_half2full(ch);
     } else {
         return;
     }
