@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include <gtk/gtk.h>
 #include <scim.h>
 #include <gtk/scimkeyselection.h>
@@ -77,11 +78,56 @@ extern "C" {
 } // extern "C"
 
 // Internal data structure
-struct KeyboardConfigData
+
+struct ButtonOption
 {
     const char *key;
-    String      data;
+    const char *label;
+    gboolean    default_value;
+    gboolean    current_value;
+    GtkWidget  *button;
 };
+
+ButtonOption button_options[] =
+{
+    {
+        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_SHIFT,
+        "Shift",
+        true,
+        true,
+        NULL
+    },
+    {
+        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_CONTROL,
+        "Ctrl",
+        false,
+        false,
+        NULL
+    },
+    {
+        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_NONE,
+        "Do not use it",
+        false,
+        false,
+        NULL
+    },
+    {
+        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_MINUS_EQUAL,
+        "Minus/Equal (-/=)",
+        true,
+        true,
+        NULL
+    },
+    {
+        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_COMMA_PERIOD,
+        "Comman/Period (,/.)",
+        false,
+        false,
+        NULL
+    }
+};
+
+static const size_t N_BUTTON_OPTIONS = sizeof(button_options)/sizeof(button_options[0]);
 
 // Internal data declaration.
 static bool have_changed                 = false;
@@ -97,13 +143,6 @@ on_page_flipping_toggled               (GtkToggleButton *togglebutton,
 
 static GtkWidget *
 create_pinyin_page(GtkWidget *notebook, gint page_num);
-
-static void
-update_keyboard_config(int key_index, const char* key, gboolean stat);
-
-static bool is_key_in(const String& keys, const char *key);
-static String add_key_to(const String& keys, const char *key);
-static String remove_key_from(const String& keys, const char *key);
 
 // Function implementations.
 static GtkWidget *
@@ -133,43 +172,11 @@ create_setup_window ()
 }
 
 enum {
-    CONFIG_SWITCH,
-    CONFIG_PAGE_UP,
-    CONFIG_PAGE_DOWN
-};
-
-static KeyboardConfigData config_keyboards[] =
-{
-    {
-        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_KEY,
-        "Shift+Shift_L+KeyRelease"
-    },
-    {
-        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_UP_KEY,
-        "Page_Up"
-    },
-    {
-        SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_DOWN_KEY,
-        "Page_Down"
-    },
-    {
-        NULL,
-        ""
-    }
-};
-
-struct StateSwitchingKeys
-{
-    const char *label;
-    const char *key;
-    GtkWidget  *button;
-};
-
-static StateSwitchingKeys state_switching_keys[] =
-{
-    {_("Shift"), "Shift". NULL},
-    {_("Ctrl"),  "Shift", NULL},
-    {_("None"),  NULL, NULL}
+    OPT_SWITCH_SHIFT,
+    OPT_SWITCH_CONTRL,
+    OPT_SWITCH_NONE,
+    OPT_PAGE_MINUS,
+    OPT_PAGE_COMMA
 };
 
 static GtkWidget *
@@ -196,18 +203,18 @@ create_state_switch_frame()
     
     GtkWidget *radio_buttons[3] = { NULL };
     GSList *radio_group = NULL;
-    for (int i = 0; i < 3; ++i) {
-        radio_buttons[i] =
-            gtk_radio_button_new_with_label(radio_group,
-                                            state_switching_keys[i+1].label);
-        gtk_widget_show(radio_buttons[i]);
-        gtk_box_pack_start(GTK_BOX(hbox), radio_buttons[i], FALSE, FALSE, 0);
-        radio_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio_buttons[i]));
-        gtk_radio_button_set_group(GTK_RADIO_BUTTON(radio_buttons[i]), radio_group);
-        gtk_container_set_border_width (GTK_CONTAINER (radio_buttons[i]), 2);
-        g_signal_connect(G_OBJECT(radio_buttons[i]), "toggled",
+    for (int i = OPT_SWITCH_SHIFT; i <= OPT_SWITCH_NONE; ++i) {
+        ButtonOption& opt = button_options[i];
+        opt.button = gtk_radio_button_new_with_label(radio_group,
+                                                     opt.label);
+        gtk_widget_show(opt.button);
+        gtk_box_pack_start(GTK_BOX(hbox), opt.button, FALSE, FALSE, 0);
+        radio_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(opt.button));
+        gtk_radio_button_set_group(GTK_RADIO_BUTTON(opt.button), radio_group);
+        gtk_container_set_border_width (GTK_CONTAINER (opt.button), 2);
+        g_signal_connect(G_OBJECT(opt.button), "toggled",
                          G_CALLBACK(on_state_switch_toggled),
-                         &state_switching_keys[i]);
+                         &opt);
     }
     return frame;
 }
@@ -215,61 +222,10 @@ create_state_switch_frame()
 static void
 on_state_switch_toggled(GtkToggleButton *button, gpointer user_data)
 {
-    StateSwitchingKeys *key_info = (StateSwitchingKeys *)user_data;
-    gboolean stat = gtk_toggle_button_get_active(button);
-    if (key_info->key == NULL) {
-        if (stat)
-            config_keyboards[CONFIG_SWITCH].data.clear();
-        return;
-    }
-    update_keyboard_config(CONFIG_SWITCH, key_info->key, stat);
+    ButtonOption *opt = (ButtonOption *)user_data;
+    opt->current_value = gtk_toggle_button_get_active(button);
+    have_changed = true;
 }
-
-static void
-update_keyboard_config(int key_index, const char* key, gboolean stat)
-{
-    KeyboardConfigData& config = config_keyboards[key_index];
-    if (stat) {
-        config.data = add_key_to(config.data, key);
-    } else {
-        config.data = remove_key_from(config.data, key);
-    }
-}
-
-String add_key_to(const String& keys, const char *key)
-{
-    vector<String> v;
-    int n_keys = scim_split_string_list(v, keys);
-    vector<String>::iterator where = find(v.begin(), v.end(), key);
-    if (where == v.end()) {
-        v.push_back(key);
-    }
-    return scim_combine_string_list(v);
-}
-
-String remove_key_from(const String& keys, const char *key)
-{
-    vector<String> v;
-    int n_keys = scim_split_string_list(v, keys);
-    vector<String>::iterator where = find(v.begin(), v.end(), key);
-    if (where != v.end()) {
-        v.erase(where);
-    }
-    return scim_combine_string_list(v);
-}
-
-struct PageFlippingKeys
-{
-    const char *label;
-    const char *page_down;
-    const char *page_up;
-};
-
-static PageFlippingKeys page_flipping_keys[] =
-{
-    {_("Minus/Equal (-/=)"),  "Minus", "Equal"},
-    {_("Comma/Period (,/.)"), "Comma", "Period"}
-};
 
 static GtkWidget *
 create_candidate_view_frame()
@@ -293,14 +249,15 @@ create_candidate_view_frame()
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
     
     GtkWidget *check_buttons[2] = { NULL };
-    for (int i = 0; i < 2; ++i) {
-        check_buttons[i] = gtk_check_button_new_with_label(page_flipping_keys[i].label);
-        gtk_widget_show(check_buttons[i]);
-        gtk_box_pack_start(GTK_BOX(hbox), check_buttons[i], FALSE, FALSE, 0);
-        gtk_container_set_border_width (GTK_CONTAINER (check_buttons[i]), 2);
-        g_signal_connect(G_OBJECT(check_buttons[i]), "toggled",
+    for (int i = OPT_PAGE_MINUS; i <= OPT_PAGE_COMMA; ++i) {
+        ButtonOption& opt = button_options[i];
+        opt.button = gtk_check_button_new_with_label(opt.label);
+        gtk_widget_show(opt.button);
+        gtk_box_pack_start(GTK_BOX(hbox), opt.button, FALSE, FALSE, 0);
+        gtk_container_set_border_width (GTK_CONTAINER (opt.button), 2);
+        g_signal_connect(G_OBJECT(opt.button), "toggled",
                          G_CALLBACK(on_page_flipping_toggled),
-                         &check_buttons[i]);
+                         &opt);
     }
     // TODO (chaik)
     // - hotkey for choosing 2nd and 3rd candidate
@@ -312,11 +269,9 @@ create_candidate_view_frame()
 static void
 on_page_flipping_toggled(GtkToggleButton *button, gpointer user_data)
 {
-    PageFlippingKeys *key_info = (PageFlippingKeys *)user_data;
-    
-    gboolean stat = gtk_toggle_button_get_active(button);
-    update_keyboard_config(CONFIG_PAGE_DOWN, key_info->page_down, stat);
-    update_keyboard_config(CONFIG_PAGE_UP, key_info->page_up, stat);
+    ButtonOption *opt = (ButtonOption *)user_data;
+    opt->current_value = gtk_toggle_button_get_active(button);
+    have_changed = true;
 }
 
 // Create the keyboard configurations page
@@ -347,52 +302,41 @@ query_changed()
     return have_changed;
 }
 
+
+static bool
+update_button_with_config(ButtonOption opt, const ConfigPointer &config)
+{
+    bool stat;
+    stat = config->read(String (opt.key), opt.default_value);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(opt.button), stat);
+    return stat;
+}
+
 static void
 load_config (const ConfigPointer &config)
 {
     if (config.null()) return;
-    for (int i = 0; i < config_keyboards[i].key; ++i) {
-        config_keyboards[i].data =
-            config->read (String(config_keyboards[i].key),
-                          config_keyboards[i].data);
-    }
-    for (int i = 0; i < 3; ++i) {
-        gboolean stat;
-        if (i != 2) {
-            stat = is_key_in(config_keyboards[CONFIG_SWITCH].data,
-                             state_switching_keys[i].key);
-        } else {
-            stat = config_keyboards[CONFIG_SWITCH].data.empty();
-        }
-        gtk_toggle_button_set_active(
-            GTK_TOGGLE_BUTTON(state_switching_keys[i].button), stat);
-    }
-    for (int i = 0; i < 2; ++i) {
-        gboolean stat;
-        stat = config_keyboards[CONFIG_PAGE_UP->read (String 
-                         
+    for_each(button_options, button_options + N_BUTTON_OPTIONS,
+             bind2nd(ptr_fun(update_button_with_config), config));
+}
+
+static bool
+update_config_with_button(const ConfigPointer &config, ButtonOption opt)
+{
+    bool stat;
+    stat = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opt.button));
+    config->write(String(opt.key), stat);
+    return stat;
 }
 
 static void
 save_config (const ConfigPointer &config)
 {
     if (config.null()) return;
-    for (int i = 0; i < config_keyboards[i].key; ++i) {
-        config->write (String  (config_keyboards[i].key),
-                       config_keyboards[i].data);
-    }
+    for_each(button_options, button_options + N_BUTTON_OPTIONS,
+             bind1st(ptr_fun(update_config_with_button), config));
     have_changed = false;
 }
-
-static void
-update_ui_with_config()
-{
-    
-}
-
-static void
-update_config_with_ui()
-{}
 
 
 /*
