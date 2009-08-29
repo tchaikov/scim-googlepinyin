@@ -5,11 +5,15 @@
 #include <vector>
 #include <string>
 
+#include "dictdef.h"
+
 using std::vector;
 using std::list;
 using std::wstring;
 using std::string;
-
+namespace ime_pinyin {
+    class MatrixSearch;
+}
 
 class PinyinDecoderService
 {
@@ -28,6 +32,7 @@ public:
     wstring get_choice(size_t cand_id) const;
     std::list<wstring> get_choice_list(int choices_start, int choices_num,
                                        int sent_fixed_len) const;
+    int get_predict_num(const wstring& fixed_str);
     wstring get_predict_item(int predict_no) const;
     std::list<wstring> get_predict_list(int predicts_start,
                                         int predicts_num) const;
@@ -40,7 +45,12 @@ private:
     void fini_pinyin_engine();
 
 private:
-    bool m_inited;
+    // The maximum number of the prediction items.
+    enum {kMaxPredictNum = 500};
+    // Used to search Pinyin string and give the best candidate.
+    ime_pinyin::MatrixSearch * m_matrix_search;
+    uint16_t m_predict_buf[kMaxPredictNum][ime_pinyin::kMaxPredictSize + 1];
+    size_t m_predict_len;
     string m_sys_dict;
     string m_usr_dict;
 };

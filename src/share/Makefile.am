@@ -8,7 +8,6 @@ libpinyinime_la_SOURCES = \
 	matrixsearch.cpp \
 	mystdlib.cpp \
 	ngram.cpp \
-	pinyinime.cpp \
 	searchutility.cpp \
 	spellingtable.cpp \
 	spellingtrie.cpp \
