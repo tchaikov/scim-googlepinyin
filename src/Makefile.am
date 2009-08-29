@@ -32,3 +32,25 @@ googlepinyin_la_LDFLAGS = -avoid-version \
                           @SCIM_LIBS@
 
 googlepinyin_la_LIBADD = ./share/libpinyinime.la
+
+#
+# setup UI
+#
+setupmoduledir           = @SCIM_MODULEDIR@/SetupUI
+setupmodule_LTLIBRARIES  = googlepinyin-imengine-setup.la
+
+googlepinyin_imengine_setup_la_SOURCES = google_imengine_setup.cpp
+
+googlepinyin_imengine_setup_la_CXXFLAGS = \
+                                       @SCIM_GTKUTILS_CFLAGS@ \
+                                       @SCIM_CFLAGS@ \
+			  	       -DSCIM_GOOGLEPINYIN_LOCALEDIR=\"$(datadir)/locale\"
+
+googlepinyin_imengine_setup_la_LDFLAGS = \
+                                      -avoid-version \
+                                      -rpath $(setupmoduledir) \
+                                      -module \
+                                      $(LIBTOOL_EXPORT_OPTIONS) \
+                                      @SCIM_GTKUTILS_LIBS@ \
+                                      @LTLIBINTL@ \
+                                      @SCIM_LIBS@

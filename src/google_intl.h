@@ -1,5 +1,5 @@
-#ifndef GOOGLEPINYIN_PRIVATE_H
-#define GOOGLEPINYIN_PRIVATE_H
+#ifndef GOOGLEPINYIN_INTL_H
+#define GOOGLEPINYIN_INTL_H
 
 // Include scim-sunpin configuration header
 #ifdef HAVE_CONFIG_H
@@ -18,4 +18,4 @@
   #define bind_textdomain_codeset(domain,codeset)
 #endif
 
-#endif // GOOGLEPINYIN_PRIVATE_H
+#endif // GOOGLEPINYIN_INTL_H
