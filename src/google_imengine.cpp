@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cassert>
 
 #include <scim.h>
 
@@ -100,11 +101,7 @@ extern "C" {
         SCIM_DEBUG_IMENGINE (3) << "entering scim_imengine_module_create_factory()\n";
         if (engine != 0) return IMEngineFactoryPointer (0);
         if (_scim_pinyin_factory.null ()) {
-            GooglePyFactory *factory = new GooglePyFactory (_scim_config); 
-            if (factory->valid ())
-                _scim_pinyin_factory = factory;
-            else
-                delete factory;
+            _scim_pinyin_factory = new GooglePyFactory (_scim_config);
         }
         return _scim_pinyin_factory;
     }
@@ -112,19 +109,17 @@ extern "C" {
 
 // implementation of GooglePyFactory
 GooglePyFactory::GooglePyFactory (const ConfigPointer &config)
-    : m_config (config),
-      m_valid (false)
+    : m_config (config)
 {
     SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory()\n";
     set_languages ("zh_CN");
     m_name = utf8_mbstowcs ("GooglePinyin");
-    m_valid = init ();
     m_func_keys = new FunctionKeys();
     m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &GooglePyFactory::reload_config));
 }
 
-bool
-GooglePyFactory::init ()
+PinyinDecoderService *
+GooglePyFactory::create_decoder_service ()
 {
     String sys_dict_path =  String(SCIM_GOOGLEPINYIN_DATADIR) +
                             String(SCIM_PATH_DELIM_STRING) +
@@ -137,19 +132,16 @@ GooglePyFactory::init ()
     String usr_dict_path = String(user_data_directory +
                                   String(SCIM_PATH_DELIM_STRING) +
                                   String("usr_dict.dat"));
-    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::init()\n";
+    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::create_decoder_service()\n";
     SCIM_DEBUG_IMENGINE (3) << "sys_dict_path = " << sys_dict_path << "\n";
     SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << usr_dict_path << "\n";
-    m_decoder_service = new PinyinDecoderService(sys_dict_path,
-                                                 usr_dict_path);
-    return m_decoder_service->is_initialized();
+    return new PinyinDecoderService(sys_dict_path, usr_dict_path);
 }
 
 GooglePyFactory::~GooglePyFactory ()
 {
     SCIM_DEBUG_IMENGINE (3) << "~GooglePyFactory()\n";
     m_reload_signal_connection.disconnect ();
-    delete m_decoder_service;
     delete m_func_keys;
 }
 
@@ -208,8 +200,8 @@ GooglePyFactory::get_icon_file () const
 IMEngineInstancePointer
 GooglePyFactory::create_instance (const String& encoding, int id)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  "GooglePyFactory::create_instance(" << id << ")\n";    
-    return new GooglePyInstance (this, m_decoder_service, m_func_keys, encoding, id);
+    SCIM_DEBUG_IMENGINE (3) <<  "GooglePyFactory::create_instance(" << id << ")\n";
+    return new GooglePyInstance (this, m_func_keys, encoding, id);
 }
 
 void
@@ -220,7 +212,6 @@ GooglePyFactory::reload_config (const ConfigPointer &config)
 
 // implementation of GooglePyInstance
 GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
-                                    PinyinDecoderService *decoder_service,
                                     FunctionKeys *func_keys,
                                     const String& encoding,
                                     int id)
@@ -229,7 +220,8 @@ GooglePyInstance::GooglePyInstance (GooglePyFactory *factory,
       m_focused (false)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": GooglePyInstance()\n";
-    m_pinyin_ime = new PinyinIME(decoder_service, func_keys, this);
+    m_decoder_service = m_factory->create_decoder_service();
+    m_pinyin_ime = new PinyinIME(m_decoder_service, func_keys, this);
     m_lookup_table = new PinyinLookupTable(m_pinyin_ime->get_decoding_info(),
                                            9);
     m_reload_signal_connection =
@@ -244,6 +236,7 @@ GooglePyInstance::~GooglePyInstance ()
     m_reload_signal_connection.disconnect ();
     delete m_lookup_table;
     delete m_pinyin_ime;
+    delete m_decoder_service;
 }
 
 bool

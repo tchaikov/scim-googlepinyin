@@ -18,12 +18,9 @@ class FunctionKeys;
 class GooglePyFactory : public IMEngineFactoryBase
 {
     ConfigPointer       m_config;
-    bool                m_valid;
     WideString          m_name;
     Connection          m_reload_signal_connection;
-
-    PinyinDecoderService *m_decoder_service;
-    FunctionKeys         *m_func_keys;
+    FunctionKeys       *m_func_keys;
     
     friend class GooglePyInstance;
     
@@ -42,8 +39,8 @@ public:
     virtual IMEngineInstancePointer create_instance (const String& encoding, int id = -1);
     
 public:
-    bool valid () const { return m_valid; }
     void reload_config(const ConfigPointer& config);
+    PinyinDecoderService *create_decoder_service();
     
 private:
     bool init ();
@@ -55,18 +52,17 @@ class GooglePyInstance : public IMEngineInstanceBase
         IM_EN, IM_CN_SIMPLIFIED, IM_CN_TRADITIONAL
     };
     
-    GooglePyFactory        *m_factory;
-    PinyinLookupTable      *m_lookup_table;
-    
+    GooglePyFactory     *m_factory;
+    PinyinLookupTable   *m_lookup_table;
     Connection           m_reload_signal_connection;
     bool                 m_focused;
     bool                 m_forward;
-
-    PinyinIME           *m_pinyin_ime;
+    
+    PinyinDecoderService *m_decoder_service;
+    PinyinIME            *m_pinyin_ime;
     
 public:
     GooglePyInstance(GooglePyFactory *factory,
-                     PinyinDecoderService *decoder_service,
                      FunctionKeys *func_keys,
                      const String& encoding, int id);
     virtual ~GooglePyInstance();

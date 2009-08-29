@@ -25,7 +25,9 @@ wstring char16_to_wstr(char16* s, size_t len)
 
 PinyinDecoderService::PinyinDecoderService(const string& sys_dict_path,
                                            const string& usr_dict_path)
-    : m_sys_dict(sys_dict_path), m_usr_dict(usr_dict_path)
+    : m_matrix_search(NULL),
+      m_sys_dict(sys_dict_path),
+      m_usr_dict(usr_dict_path)
 {
     init_pinyin_engine();
 }
