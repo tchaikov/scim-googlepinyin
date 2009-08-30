@@ -49,8 +49,6 @@ static void        load_config (const ConfigPointer &config);
 static void        save_config (const ConfigPointer &config);
 static bool        query_changed ();
 
-fstream fs("/tmp/ui.log", fstream::app|fstream::out);
-
 // Module Interface.
 extern "C" {
     void scim_module_init (void)
@@ -105,8 +103,8 @@ struct ButtonOption
 {
     const char *key;
     const char *label;
-    gboolean    default_value;
-    gboolean    current_value;
+    bool        default_value;
+    bool        current_value;
     GtkWidget  *button;
 };
 
@@ -317,30 +315,13 @@ update_button_with_config(ButtonOption opt, const ConfigPointer &config)
 {
     bool stat;
     stat = config->read(String (opt.key), opt.default_value);
-    fs << "update_button_with_config()"
-       << opt.key << " => "
-       << stat << ", default = " << opt.default_value << endl;
-    
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(opt.button), stat);
 }
 
 static void
 load_config (const ConfigPointer &config)
 {
-    fs  << "load_config()\n";
-    
     if (config.null()) return;
-    fs  << "load_config(not null)\n";
-
-    
-    bool stat;
-    stat = config->read(String (button_options[0].key), button_options[0].default_value);
-    fs << "update_button_with_config()"
-       << button_options[0].key << " => "
-       << stat << ", default = " << button_options[0].default_value << endl;
-    
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button_options[0].button), stat);
-    
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
              bind2nd(ptr_fun(update_button_with_config), config));
     have_changed = false;
@@ -351,22 +332,16 @@ update_config_with_button(const ConfigPointer &config, ButtonOption opt)
 {
     bool stat;
     stat = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opt.button));
-    fs << "update_config_with_button()"
-                         << opt.key << ", "
-                         << stat << endl;
     config->write(String(opt.key), stat);
 }
 
 static void
 save_config (const ConfigPointer &config)
 {
-    fs  << "save_config()\n";
     if (config.null()) return;
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
              bind1st(ptr_fun(update_config_with_button), config));
     have_changed = false;
-
-    load_config(config);
 }
 
 
