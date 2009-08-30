@@ -1,10 +1,10 @@
-AC_INIT(android, 1.0)
+AC_INIT(android, 0.1, tchaikov@gmail.com)
 AC_CANONICAL_SYSTEM()
 AC_PREFIX_DEFAULT([/usr])
-AC_CONFIG_SRCDIR(src/share/pinyinime.cpp)
+AC_CONFIG_SRCDIR(src/google_imengine.cpp)
 AM_CONFIG_HEADER(config.h)
 
-GETTEXT_PACKAGE=google-pinyin
+GETTEXT_PACKAGE=scim-googlepinyin
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [The gettext domain])
 
@@ -72,7 +72,7 @@ AC_PROG_LIBTOOL
 # Checks for header files.
 AC_PATH_X
 AC_HEADER_STDC
-AC_CHECK_HEADERS(assert.h iconv.h fcntl.h locale.h stdlib.h string.h unistd.h libintl.h sys/mman.h)
+AC_CHECK_HEADERS(assert.h iconv.h fcntl.h locale.h stdlib.h string.h unistd.h libintl.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -86,6 +86,7 @@ AC_CHECK_FUNCS(memset munmap setlocale strdup log2 exp2)
 AC_CONFIG_FILES([Makefile 
                  data/Makefile
                  src/Makefile
+                  src/include/Makefile
                  src/data/Makefile
                  src/share/Makefile
                  src/command/Makefile])

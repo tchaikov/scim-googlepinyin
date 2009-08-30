@@ -1,10 +1,23 @@
 AUTOMAKE_OPTIONS 	= gnu
-SUBDIRS 		= share command
+SUBDIRS 		= share command data include
 
 MAINTAINERCLEANFILES 	= Makefile.in 
 
+noinst_HEADERS          = candidate_view.h \
+                          composing_view.h \
+                          decoding_info.h \
+                          function_keys.h \
+                          google_imengine_config_keys.h \
+                          google_imengine.h \
+                          google_intl.h \
+                          google_keycode.h \
+                          ime_state.h \
+                          pinyin_decoder_service.h \
+                          pinyin_ime.h \
+                          pinyin_lookup_table.h \
+                          pinyin_util.h 
+
 moduledir = @SCIM_MODULEDIR@/IMEngine
-#noinst_LTLIBRARIES = googlepinyin.la
 module_LTLIBRARIES = googlepinyin.la
 
 googlepinyin_la_SOURCES = decoding_info.cpp \
