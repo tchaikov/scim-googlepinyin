@@ -152,8 +152,6 @@ GooglePyFactory::get_help () const
 {
     String help =
         String (_("Hot Keys:"
-                  "\n\n  Shift+Alt:\n"
-                  "    Switch between English/Chinese mode."
                   "\n\n  Control+period:\n"
                   "    Switch between full/half width punctuation mode."
                   "\n\n  Shift+space:\n"
