@@ -29,6 +29,7 @@
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
 #include "pinyin_ime.h"
+#include "google_imengine_config_keys.h"
 #include "function_keys.h"
 #include "google_imengine.h"
 
@@ -115,27 +116,8 @@ GooglePyFactory::GooglePyFactory (const ConfigPointer &config)
     set_languages ("zh_CN");
     m_name = utf8_mbstowcs ("GooglePinyin");
     m_func_keys = new FunctionKeys();
+    init();
     m_reload_signal_connection = m_config->signal_connect_reload (slot (this, &GooglePyFactory::reload_config));
-}
-
-PinyinDecoderService *
-GooglePyFactory::create_decoder_service ()
-{
-    String sys_dict_path =  String(SCIM_GOOGLEPINYIN_DATADIR) +
-                            String(SCIM_PATH_DELIM_STRING) +
-                            String("dict_pinyin.dat");
-    String user_data_directory = String(scim_get_home_dir () +
-                                        String (SCIM_PATH_DELIM_STRING) +
-                                        String (".scim") + 
-                                        String (SCIM_PATH_DELIM_STRING) +
-                                        String ("google-pinyin"));
-    String usr_dict_path = String(user_data_directory +
-                                  String(SCIM_PATH_DELIM_STRING) +
-                                  String("usr_dict.dat"));
-    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::create_decoder_service()\n";
-    SCIM_DEBUG_IMENGINE (3) << "sys_dict_path = " << sys_dict_path << "\n";
-    SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << usr_dict_path << "\n";
-    return new PinyinDecoderService(sys_dict_path, usr_dict_path);
 }
 
 GooglePyFactory::~GooglePyFactory ()
@@ -208,6 +190,81 @@ void
 GooglePyFactory::reload_config (const ConfigPointer &config)
 {
     m_config = config;
+    load_user_config();
+}
+
+
+PinyinDecoderService *
+GooglePyFactory::create_decoder_service ()
+{
+    return new PinyinDecoderService(m_sys_dict_path, m_usr_dict_path);
+}
+
+bool
+GooglePyFactory::init()
+{
+    m_sys_dict_path = (String(SCIM_GOOGLEPINYIN_DATADIR) +
+                       String(SCIM_PATH_DELIM_STRING) +
+                       String("dict_pinyin.dat"));
+    String user_data_directory = String(scim_get_home_dir () +
+                                        String (SCIM_PATH_DELIM_STRING) +
+                                        String (".scim") + 
+                                        String (SCIM_PATH_DELIM_STRING) +
+                                        String ("google-pinyin"));
+    create_directory_if_necessary(user_data_directory);
+    m_usr_dict_path = (user_data_directory +
+                       String(SCIM_PATH_DELIM_STRING) +
+                       String("usr_dict.dat"));
+    SCIM_DEBUG_IMENGINE (3) << "GooglePyFactory::create_decoder_service()\n";
+    SCIM_DEBUG_IMENGINE (3) << "sys_dict_path = " << m_sys_dict_path << "\n";
+    SCIM_DEBUG_IMENGINE (3) << "usr_dict_path = " << m_usr_dict_path << "\n";
+    
+    load_user_config();
+    return true;
+}
+
+bool
+GooglePyFactory::create_directory_if_necessary(const String& directory) {
+    if (access (directory.c_str (), R_OK | W_OK)) {
+        mkdir (directory.c_str (), S_IRUSR | S_IWUSR | S_IXUSR);
+        if (access (directory.c_str (), R_OK | W_OK))
+            return false;
+    }
+    return true;
+}
+
+void
+GooglePyFactory::load_user_config()
+{
+    if (!m_config) return;
+    
+    bool enabled;
+
+    enabled = m_config->read (
+        String(SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_SHIFT), true);
+    KeyEvent lshift(SCIM_KEY_Shift_L, SCIM_KEY_ShiftMask | SCIM_KEY_ReleaseMask);
+    m_func_keys->set_mode_switch_key(lshift, enabled);
+    
+    enabled = m_config->read (
+        String(SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_CONTROL), false);
+    KeyEvent lcontrol(SCIM_KEY_Control_L, SCIM_KEY_ControlMask | SCIM_KEY_ReleaseMask);
+    m_func_keys->set_mode_switch_key(lcontrol, enabled);
+
+    // we don't need to read SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_MODE_SWITCH_NONE here
+    enabled = m_config->read (
+        String(SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_MINUS_EQUAL), true);
+    KeyEvent minus(SCIM_KEY_minus);
+    KeyEvent equal(SCIM_KEY_equal);
+    m_func_keys->set_page_up_key(minus, enabled);
+    m_func_keys->set_page_down_key(minus, enabled);
+    
+    enabled = m_config->read (
+        String(SCIM_CONFIG_IMENGINE_GOOGLE_PINYIN_PAGE_COMMA_PERIOD), false);
+    KeyEvent comma(SCIM_KEY_comma);
+    KeyEvent period(SCIM_KEY_period);
+    m_func_keys->set_page_up_key(comma, enabled);
+    m_func_keys->set_page_down_key(period, enabled);
+    
 }
 
 // implementation of GooglePyInstance
@@ -487,4 +544,5 @@ GooglePyInstance::reload_config(const ConfigPointer &config)
 {
     SCIM_DEBUG_IMENGINE (3) << get_id() << ": reload_config()\n";
     reset();
+    m_factory->load_user_config();
 }

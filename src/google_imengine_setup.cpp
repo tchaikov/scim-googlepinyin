@@ -1,33 +1,55 @@
+/*
+ * Copyright (c) 2009 Kov Chai <tchaikov@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #define Uses_SCIM_CONFIG_BASE
+#define Uses_SCIM_DEBUG
 
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <gtk/gtk.h>
 #include <scim.h>
-#include <gtk/scimkeyselection.h>
+
+#include <iostream>
+
+//#include <gtk/scimkeyselection.h>
 #include "google_intl.h"
 #include "google_imengine_config_keys.h"
 
 using namespace scim;
 using namespace std;
 
-#define scim_module_init pinyin_imengine_setup_LTX_scim_module_init
-#define scim_module_exit pinyin_imengine_setup_LTX_scim_module_exit
+#define scim_module_init googlepinyin_imengine_setup_LTX_scim_module_init
+#define scim_module_exit googlepinyin_imengine_setup_LTX_scim_module_exit
 
-#define scim_setup_module_create_ui       pinyin_imengine_setup_LTX_scim_setup_module_create_ui
-#define scim_setup_module_get_category    pinyin_imengine_setup_LTX_scim_setup_module_get_category
-#define scim_setup_module_get_name        pinyin_imengine_setup_LTX_scim_setup_module_get_name
-#define scim_setup_module_get_description pinyin_imengine_setup_LTX_scim_setup_module_get_description
-#define scim_setup_module_load_config     pinyin_imengine_setup_LTX_scim_setup_module_load_config
-#define scim_setup_module_save_config     pinyin_imengine_setup_LTX_scim_setup_module_save_config
-#define scim_setup_module_query_changed   pinyin_imengine_setup_LTX_scim_setup_module_query_changed
+#define scim_setup_module_create_ui       googlepinyin_imengine_setup_LTX_scim_setup_module_create_ui
+#define scim_setup_module_get_category    googlepinyin_imengine_setup_LTX_scim_setup_module_get_category
+#define scim_setup_module_get_name        googlepinyin_imengine_setup_LTX_scim_setup_module_get_name
+#define scim_setup_module_get_description googlepinyin_imengine_setup_LTX_scim_setup_module_get_description
+#define scim_setup_module_load_config     googlepinyin_imengine_setup_LTX_scim_setup_module_load_config
+#define scim_setup_module_save_config     googlepinyin_imengine_setup_LTX_scim_setup_module_save_config
+#define scim_setup_module_query_changed   googlepinyin_imengine_setup_LTX_scim_setup_module_query_changed
 
 
 static GtkWidget * create_setup_window ();
 static void        load_config (const ConfigPointer &config);
 static void        save_config (const ConfigPointer &config);
 static bool        query_changed ();
+
+fstream fs("/tmp/ui.log", fstream::app|fstream::out);
 
 // Module Interface.
 extern "C" {
@@ -150,7 +172,7 @@ create_setup_window ()
 {
     static GtkWidget *window = 0;
 
-    if (window) window;
+    if (window) return window;
     
     GtkWidget *notebook;
     
@@ -196,12 +218,6 @@ create_state_switch_frame()
     gtk_widget_show(hbox);
     gtk_container_add(GTK_CONTAINER(frame), hbox);
 
-    GtkWidget *label;
-    label = gtk_label_new("Switching between Chinese and English");
-    gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-    
-    GtkWidget *radio_buttons[3] = { NULL };
     GSList *radio_group = NULL;
     for (int i = OPT_SWITCH_SHIFT; i <= OPT_SWITCH_NONE; ++i) {
         ButtonOption& opt = button_options[i];
@@ -246,14 +262,13 @@ create_candidate_view_frame()
     GtkWidget *label;
     label = gtk_label_new("Page Flipping");
     gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 2);
     
-    GtkWidget *check_buttons[2] = { NULL };
     for (int i = OPT_PAGE_MINUS; i <= OPT_PAGE_COMMA; ++i) {
         ButtonOption& opt = button_options[i];
         opt.button = gtk_check_button_new_with_label(opt.label);
         gtk_widget_show(opt.button);
-        gtk_box_pack_start(GTK_BOX(hbox), opt.button, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(hbox), opt.button, FALSE, FALSE, 2);
         gtk_container_set_border_width (GTK_CONTAINER (opt.button), 2);
         g_signal_connect(G_OBJECT(opt.button), "toggled",
                          G_CALLBACK(on_page_flipping_toggled),
@@ -286,14 +301,8 @@ create_pinyin_page(GtkWidget *notebook, gint page_num)
     frame = create_state_switch_frame();
     gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 2);
     frame = create_candidate_view_frame();
-    gtk_box_pack_start(GTK_BOX(vbox), frame, TRUE, TRUE, 2);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 2);
     return vbox;
-}
-
-static void
-on_value_changed(GtkWidget *widget, gpointer user_data)
-{
-    have_changed = true;
 }
 
 static bool
@@ -303,39 +312,61 @@ query_changed()
 }
 
 
-static bool
+static void
 update_button_with_config(ButtonOption opt, const ConfigPointer &config)
 {
     bool stat;
     stat = config->read(String (opt.key), opt.default_value);
+    fs << "update_button_with_config()"
+       << opt.key << " => "
+       << stat << ", default = " << opt.default_value << endl;
+    
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(opt.button), stat);
-    return stat;
 }
 
 static void
 load_config (const ConfigPointer &config)
 {
+    fs  << "load_config()\n";
+    
     if (config.null()) return;
+    fs  << "load_config(not null)\n";
+
+    
+    bool stat;
+    stat = config->read(String (button_options[0].key), button_options[0].default_value);
+    fs << "update_button_with_config()"
+       << button_options[0].key << " => "
+       << stat << ", default = " << button_options[0].default_value << endl;
+    
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button_options[0].button), stat);
+    
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
              bind2nd(ptr_fun(update_button_with_config), config));
+    have_changed = false;
 }
 
-static bool
+static void
 update_config_with_button(const ConfigPointer &config, ButtonOption opt)
 {
     bool stat;
     stat = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opt.button));
+    fs << "update_config_with_button()"
+                         << opt.key << ", "
+                         << stat << endl;
     config->write(String(opt.key), stat);
-    return stat;
 }
 
 static void
 save_config (const ConfigPointer &config)
 {
+    fs  << "save_config()\n";
     if (config.null()) return;
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
              bind1st(ptr_fun(update_config_with_button), config));
     have_changed = false;
+
+    load_config(config);
 }
 
 

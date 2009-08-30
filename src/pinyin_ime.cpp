@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2009 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #define Uses_SCIM_EVENT
 #define Uses_SCIM_IMENGINE
 #include <scim.h>
@@ -156,16 +172,7 @@ PinyinIME::process_state_input(const KeyEvent& key)
 {
     SCIM_DEBUG_IMENGINE (3) <<  "process_state_input()\n";
     char ch = key.get_ascii_code();
-    if ( (ch >= 'a' && ch <= 'z') ||
-         (ch == '\'' && !m_dec_info->char_before_cursor_is_separator()) ||
-         key.code == SCIM_KEY_BackSpace) {
-        return process_surface_change(key);
-    }
-    else if (ch == ',' || ch == '.' ) {
-        input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
-                           ch, true, ImeState::STATE_IDLE);
-        return true;
-    } else if (key.code == SCIM_KEY_Up) {
+    if (key.code == SCIM_KEY_Up) {
         return m_cand_view->cursor_left();
     } else if (key.code == SCIM_KEY_Down) {
         return m_cand_view->cursor_right();
@@ -173,11 +180,13 @@ PinyinIME::process_state_input(const KeyEvent& key)
         m_cand_view->enable_active_highlight(false);
         change_to_state_composing(true);
         update_composing_text(true);
+        return true;
     } else if (key.code == SCIM_KEY_Home) {
         m_cand_view->enable_active_highlight(false);
         change_to_state_composing(true);
         update_composing_text(true);
         m_cmps_view->move_cursor_to_edge(true);
+        return true;
     } else if (m_func_keys->is_page_up_key(key)) {
         return m_cand_view->page_up();
     } else if (m_func_keys->is_page_down_key(key)) {
@@ -192,6 +201,14 @@ PinyinIME::process_state_input(const KeyEvent& key)
         return true;
     } else if (key.code == SCIM_KEY_space) {
         choose_candidate(-1);
+        return true;
+    } else if ((ch >= 'a' && ch <= 'z') ||
+               (ch == '\'' && !m_dec_info->char_before_cursor_is_separator()) ||
+               key.code == SCIM_KEY_BackSpace) {
+        return process_surface_change(key);
+    } else if (ch == ',' || ch == '.' ) {
+        input_comma_period(m_dec_info->get_current_full_sent(m_candidate_index),
+                           ch, true, ImeState::STATE_IDLE);
         return true;
     }
     return false;
