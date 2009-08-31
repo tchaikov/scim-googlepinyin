@@ -52,8 +52,17 @@ PinyinIME::process_key(const KeyEvent& key)
         return true;
     }
     m_func_keys->remember_last_key(key);
-
+    
     if (key.is_key_release()) return true;
+
+    if (key.code == SCIM_KEY_Escape && key.mask == 0) {
+        if (m_dec_info->get_original_spl_str().empty()) {
+            return false;
+        } else {
+            reset();
+            return true;
+        }
+    }
     
     if (is_chinese_mode()) {
         return process_in_chinese(key);
@@ -152,7 +161,7 @@ PinyinIME::process_state_idle(const KeyEvent& key)
 {
     SCIM_DEBUG_IMENGINE (3) <<  "process_state_idle()\n";
     char ch = key.get_ascii_code();
-    if (ch >= 'a' && ch <= 'z' && !key.is_alt_down()) {
+    if (ch >= 'a' && ch <= 'z' && !key.is_alt_down() && !key.is_control_down()) {
         m_dec_info->add_spl_char(ch, true);
         choose_and_update(-1);
         return true;

@@ -20,6 +20,7 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <stdint.h>
 
 #include "dictdef.h"
 

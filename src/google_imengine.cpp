@@ -305,8 +305,7 @@ GooglePyInstance::process_key_event (const KeyEvent& key)
         
     if (!m_focused) return false;
     
-    return ( try_cancel(key) ||
-             try_process_key(key) );
+    return try_process_key(key);
 }
 
 void
@@ -505,30 +504,6 @@ GooglePyInstance::refresh_punct_property(bool full)
     _punct_property.set_icon(
         full ? SCIM_FULL_PUNCT_ICON : SCIM_HALF_PUNCT_ICON);
     update_property(_punct_property);
-}
-
-bool
-GooglePyInstance::try_switch_cn(const KeyEvent& key)
-{
-    SCIM_DEBUG_IMENGINE (3) << get_id() << ": try_switch_cn(" << key.code << ")\n";
-    if (key.code == SCIM_KEY_space && key.is_shift_down()) {
-        m_forward = !m_forward;
-        refresh_all_properties();
-        reset();
-        return true;
-    }
-    return false;
-}
-
-bool
-GooglePyInstance::try_cancel(const KeyEvent& key)
-{
-    if (key.code == SCIM_KEY_Escape && key.mask == 0) {
-        // if get_original_spl_str().empty() return false;
-        reset();
-        return true;
-    }
-    return false;
 }
 
 bool

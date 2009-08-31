@@ -133,7 +133,6 @@ private:
     void refresh_all_properties ();
     void initialize_all_properties();
     
-    bool try_cancel(const KeyEvent& key);
     bool try_switch_cn(const KeyEvent& key);
     bool try_process_key(const KeyEvent& key);
 };
