@@ -45,8 +45,8 @@ using namespace std;
 
 
 static GtkWidget * create_setup_window ();
-static void        load_config (const ConfigPointer &config);
-static void        save_config (const ConfigPointer &config);
+static void        load_config (const ConfigPointer& config);
+static void        save_config (const ConfigPointer& config);
 static bool        query_changed ();
 
 // Module Interface.
@@ -311,36 +311,36 @@ query_changed()
 
 
 static void
-update_button_with_config(ButtonOption opt, const ConfigPointer &config)
+update_button_with_config(ButtonOption opt, const ConfigPointer* config)
 {
     bool stat;
-    stat = config->read(String (opt.key), opt.default_value);
+    stat = (*config)->read(String (opt.key), opt.default_value);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(opt.button), stat);
 }
 
 static void
-load_config (const ConfigPointer &config)
+load_config (const ConfigPointer& config)
 {
     if (config.null()) return;
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
-             bind2nd(ptr_fun(update_button_with_config), config));
+             bind2nd(ptr_fun(update_button_with_config), &config));
     have_changed = false;
 }
 
 static void
-update_config_with_button(const ConfigPointer &config, ButtonOption opt)
+update_config_with_button(const ConfigPointer* config, ButtonOption opt)
 {
     bool stat;
     stat = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opt.button));
-    config->write(String(opt.key), stat);
+    (*config)->write(String(opt.key), stat);
 }
 
 static void
-save_config (const ConfigPointer &config)
+save_config (const ConfigPointer& config)
 {
     if (config.null()) return;
     for_each(button_options, button_options + N_BUTTON_OPTIONS,
-             bind1st(ptr_fun(update_config_with_button), config));
+             bind1st(ptr_fun(update_config_with_button), &config));
     have_changed = false;
 }
 
