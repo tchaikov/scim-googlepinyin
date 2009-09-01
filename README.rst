@@ -22,7 +22,8 @@ At the time of writing, android google-pinyin has release its version 1.1.3.  Wh
 
 `Google Pinyin for Windows <http://www.google.com/ime/pinyin/>`_  sets a high bar for us. This software is not able to match with Google Pinyin for Windows in serveral ways. To name some major features we are missing:
  - lacks a good/large enough language model. The size of IME's LM is around 10MiB while that of andoid google-pinyin is only 1.1MiB.
- - no `i' mode support
+ - the core engine used by android google pinyin may different from that of its Windows version
+ - no "i" mode support
  - no English word input assistance
  - not able to export/import user dict in text format
  - no doodle or other eye candies
