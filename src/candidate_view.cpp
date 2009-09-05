@@ -169,14 +169,6 @@ CandidateView::redraw()
 }
 
 void
-CandidateView::reset()
-{
-    m_page_no = 0;
-    m_cand_in_page = 0;
-    m_pinyin->lookup_clear();
-}
-
-void
 CandidateView::show_page(int page_no, int cand_in_page, bool enable_active_highlight)
 {
     m_page_no = page_no;

@@ -57,7 +57,6 @@ public:
     void append_candidate(const wstring&);
 
     void redraw();
-    void reset();
     
 private:
     bool cursor_back();

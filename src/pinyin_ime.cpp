@@ -264,7 +264,7 @@ PinyinIME::process_state_predict(const KeyEvent& key)
 bool
 PinyinIME::process_state_edit_composing(const KeyEvent& key)
 {
-    SCIM_DEBUG_IMENGINE (3) <<  "process_state_input()\n";
+    SCIM_DEBUG_IMENGINE (3) <<  "process_state_edit_composing()\n";
     if (key.code == SCIM_KEY_Down) {
         if (!m_dec_info->selection_finished()) {
             change_to_state_input(true);
@@ -491,7 +491,6 @@ PinyinIME::reset_candidate_window()
 {
     m_dec_info->reset_candidates();
     show_candidate_window(false);
-    m_cand_view->reset();
     m_cand_view->set_visibility(false);
 }
 
