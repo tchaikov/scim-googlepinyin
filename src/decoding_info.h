@@ -100,7 +100,7 @@ class DecodingInfo
     /**
      * Editing cursor in mSurface.
      */
-    int m_cursor_pos;
+    size_t m_cursor_pos;
         
     /**
      * The total number of choices for display. The list may only contains

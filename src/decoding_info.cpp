@@ -558,7 +558,7 @@ DecodingInfo::page_backwardable(size_t current_page) const
 bool
 DecodingInfo::char_before_cursor_is_separator() const
 {
-    int len = m_surface.length();
+    size_t len = m_surface.length();
     if (m_cursor_pos > len) return false;
     if (m_cursor_pos > 0 && m_surface[m_cursor_pos - 1] == '\'') {
         return true;

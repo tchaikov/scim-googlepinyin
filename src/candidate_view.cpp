@@ -108,10 +108,12 @@ CandidateView::page_down()
 void
 CandidateView::set_visibility(bool visibility)
 {
+    
     if (visibility) {
         m_pinyin->refresh_lookup_table();
         m_pinyin->show_lookup_table();
     } else {
+        m_pinyin->refresh_lookup_table();
         m_pinyin->hide_lookup_table();
     }
 }
@@ -151,7 +153,9 @@ void
 CandidateView::show_candidates(DecodingInfo *dec_info,
                                bool enable_active_highlight)
 {
+
     m_dec_info = dec_info;
+    m_pinyin->lookup_clear();
     show_page(0, 0, enable_active_highlight);
     set_visibility(true);
 }
@@ -162,6 +166,14 @@ CandidateView::redraw()
     if (m_dec_info->is_candidates_list_empty()) return;
     show_page(m_page_no, m_cand_in_page, true);
     set_visibility(true);
+}
+
+void
+CandidateView::reset()
+{
+    m_page_no = 0;
+    m_cand_in_page = 0;
+    m_pinyin->lookup_clear();
 }
 
 void

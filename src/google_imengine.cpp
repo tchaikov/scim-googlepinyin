@@ -465,8 +465,16 @@ GooglePyInstance::refresh_preedit_caret(int caret)
 }
 
 void
+GooglePyInstance::lookup_clear()
+{
+    SCIM_DEBUG_IMENGINE (3) << get_id() << ": lookup_clear()\n";
+    m_lookup_table->clear();
+}
+
+void
 GooglePyInstance::refresh_lookup_table()
 {
+    
     update_lookup_table(*m_lookup_table);
 }
 

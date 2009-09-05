@@ -126,6 +126,7 @@ public:
     void lookup_page_down();
     void lookup_cursor_left();
     void lookup_cursor_right();
+    void lookup_clear();
     
 private:
     void init_lookup_table_labels ();
