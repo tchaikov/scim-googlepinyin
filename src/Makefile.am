@@ -31,7 +31,7 @@ googlepinyin_la_SOURCES = decoding_info.cpp \
                           google_imengine.cpp
 
 
-googlepinyin_la_CXXFLAGS = -I$(top_builddir) -I./include \
+googlepinyin_la_CXXFLAGS = -I$(includedir) -I$(top_builddir) -I./include \
                            @SCIM_CFLAGS@ \
                            -DSCIM_ICONDIR=\"@SCIM_ICONDIR@\" \
                            -DSCIM_GOOGLEPINYIN_LOCALEDIR=\"$(datadir)/locale\" \
