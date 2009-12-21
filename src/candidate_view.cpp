@@ -134,7 +134,7 @@ CandidateView::get_current_page() const
 int
 CandidateView::get_active_candidate_pos() const
 {
-    return m_cand_in_page;
+    return m_dec_info->get_current_page_start(m_page_no) + m_cand_in_page;
 }
 
 int

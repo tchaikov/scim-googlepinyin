@@ -848,6 +848,7 @@ size_t MatrixSearch::choose(size_t cand_id) {
 
   PoolPosType step_to_dmi_fr = match_dmi(step_to,
                                          spl_id_ + fixed_hzs_, cand_len);
+  // crash here
   assert(step_to_dmi_fr != static_cast<PoolPosType>(-1));
 
   extend_mtrx_nd(matrix_[step_fr].mtrx_nd_fixed, &lpi_item, 1,
@@ -1426,7 +1427,7 @@ size_t MatrixSearch::extend_dmi(DictExtPara *dep, DictMatchInfo *dmi_s) {
     from_h[1] = dmi_s->dict_handles[1];
   }
 
-  // 2. Begin exgtending in the system dictionary
+  // 2. Begin extending in the system dictionary
   size_t lpi_num = 0;
   MileStoneHandle handles[2];
   handles[0] = handles[1] = 0;
