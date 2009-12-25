@@ -1718,6 +1718,7 @@ size_t MatrixSearch::get_lpis(const uint16* splid_str, size_t splid_str_len,
     for (size_t pos = 0; pos < lpsi_num; pos++) {
       if (pos > 0 && utf16_strcmp(lpsis[pos].str, lpsis[pos - 1].str) == 0) {
         if (lpsis[pos].lpi.psb < lpsis[pos - 1].lpi.psb) {
+            // crash here
           assert(remain_num > 0);
           lma_buf[remain_num - 1] = lpsis[pos].lpi;
         }
