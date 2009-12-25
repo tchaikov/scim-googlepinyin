@@ -16,6 +16,8 @@
 
 #include <cassert>
 
+#define Uses_SCIM_DEBUG
+#include <scim.h>
 #include "pinyin_decoder_service.h"
 #include "decoding_info.h"
 #include "candidate_view.h"

@@ -343,7 +343,7 @@ bool SpellingTrie::construct(const char* spelling_arr, size_t item_size,
 
 #ifdef ___BUILD_MODEL___
   if (kPrintDebug0) {
-    printf("---SpellingTrie Nodes: %d\n", node_num_);
+    printf("---SpellingTrie Nodes: %zd\n", node_num_);
   }
   return build_ym_info();
 #else
