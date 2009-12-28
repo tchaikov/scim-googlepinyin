@@ -280,6 +280,7 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
     } else if (key.code == SCIM_KEY_space ||
                key.code == SCIM_KEY_Return) {
         commit_result_text(m_dec_info->get_composing_str());
+        reset_to_idle_state(false);
     } else {
         return process_surface_change(key);
     }

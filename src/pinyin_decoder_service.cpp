@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include <scim.h>
 #include "matrixsearch.h"
 #include "userdict.h"
 
@@ -170,9 +171,11 @@ PinyinDecoderService::get_fixed_len() const
 string
 PinyinDecoderService::get_py_str(bool decoded)
 {
+    SCIM_DEBUG_IMENGINE (3) << "PinyinDecoderService::get_py_str(" << decoded << ")\n";
     size_t py_len;
     const char *py = m_matrix_search->get_pystr(&py_len);
     assert(py != NULL);
+    SCIM_DEBUG_IMENGINE (3) << "py = " << py <<"\n";
     if (!decoded)
         py_len = strlen(py);
     

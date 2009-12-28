@@ -224,6 +224,8 @@ DecodingInfo::selection_finished() const
 void
 DecodingInfo::choose_decoding_candidate(int cand_id)
 {
+    SCIM_DEBUG_IMENGINE (3) << "choose_decoding_candidate(" << cand_id << ")\n";
+    
     if (m_ime_state == ImeState::STATE_PREDICT)
         return;
     
@@ -252,7 +254,9 @@ DecodingInfo::choose_decoding_candidate(int cand_id)
 }
 
 void
-DecodingInfo::update_for_search(int n_candidates) {
+DecodingInfo::update_for_search(int n_candidates)
+{
+    SCIM_DEBUG_IMENGINE (3) << "update_for_search(" << n_candidates << ")\n";
     m_total_choices_num = n_candidates;
     if (m_total_choices_num < 0) {
         m_total_choices_num = 0;
@@ -260,7 +264,7 @@ DecodingInfo::update_for_search(int n_candidates) {
     }
     m_spl_start = m_decoder_service->get_spelling_start();
     string py_str = m_decoder_service->get_py_str(false);
-    m_surface_decoded_len = py_str.length();
+    m_surface_decoded_len = m_decoder_service->get_py_str(true).length();
     
     m_full_sent = m_decoder_service->get_choice(0);
     m_fixed_len = m_decoder_service->get_fixed_len();
