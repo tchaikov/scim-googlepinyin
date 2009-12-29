@@ -277,9 +277,14 @@ PinyinIME::process_state_edit_composing(const KeyEvent& key)
         m_cmps_view->move_cursor(-1);
     } else if (key.code == SCIM_KEY_Right) {
         m_cmps_view->move_cursor(1);
-    } else if (key.code == SCIM_KEY_space ||
-               key.code == SCIM_KEY_Return) {
+    } else if (key.code >= SCIM_KEY_0 && key.code <= SCIM_KEY_9) {
+        int active_pos = key.code - SCIM_KEY_1;
+        choose_candidate_in_page(active_pos);
+    } else if (key.code == SCIM_KEY_space) {
+        choose_candidate(-1);
+    } else if (key.code == SCIM_KEY_Return) {
         commit_result_text(m_dec_info->get_composing_str());
+        reset_to_idle_state(false);
     } else {
         return process_surface_change(key);
     }
