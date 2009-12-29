@@ -1019,11 +1019,12 @@ bool MatrixSearch::add_char_qwerty() {
 
     // 3. Extend the DMI nodes of that old row
     // + 1 is to extend an extra node from the root
+    PoolPosType dmi_end = matrix_[oldrow].dmi_pos + matrix_[oldrow].dmi_num;
     for (PoolPosType dmi_pos = matrix_[oldrow].dmi_pos;
-         dmi_pos < matrix_[oldrow].dmi_pos + matrix_[oldrow].dmi_num + 1;
+         dmi_pos < dmi_end + 1;
          dmi_pos++) {
       DictMatchInfo *dmi = dmi_pool_ + dmi_pos;
-      if (dmi_pos == matrix_[oldrow].dmi_pos + matrix_[oldrow].dmi_num) {
+      if (dmi_pos == dmi_end) {
         dmi = NULL;  // The last one, NULL means extending from the root.
       } else {
         // If the dmi is covered by the fixed arrange, ignore it.
@@ -1053,20 +1054,19 @@ bool MatrixSearch::add_char_qwerty() {
         }
       }
 
-      dep_->splids_extended = 0;
-      if (NULL != dmi) {
+      if (NULL == dmi) {
+        dep_->splids_extended = 0;
+      } else {
         uint16 prev_ids_num = dmi->dict_level;
         if ((!dmi_c_phrase_ && prev_ids_num >= kMaxLemmaSize) ||
             (dmi_c_phrase_ && prev_ids_num >=  kMaxRowNum)) {
           continue;
         }
 
-        DictMatchInfo *d = dmi;
-        while (d) {
+        for (DictMatchInfo *d = dmi; d; d = dmi_pool_ + d->dmi_fr) {
           dep_->splids[--prev_ids_num] = d->spl_id;
           if ((PoolPosType)-1 == d->dmi_fr)
             break;
-          d = dmi_pool_ + d->dmi_fr;
         }
         assert(0 == prev_ids_num);
         dep_->splids_extended = dmi->dict_level;
