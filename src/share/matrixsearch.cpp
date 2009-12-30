@@ -27,10 +27,6 @@
 #include "../include/ngram.h"
 #include "../include/userdict.h"
 
-using std::cout;
-using std::endl;
-
-
 namespace ime_pinyin {
 
 #define PRUMING_SCORE 8000.0
@@ -658,8 +654,6 @@ void MatrixSearch::update_dict_freq() {
 
 bool MatrixSearch::add_lma_to_userdict(uint16 lma_fr, uint16 lma_to,
                                        float score) {
-  cout << "add_lma_to_userdict(" << lma_fr << ", " << lma_to << ", " << score << ")" << endl;
-    
   if (lma_to - lma_fr <= 1 || NULL == user_dict_)
     return false;
 
@@ -689,7 +683,6 @@ bool MatrixSearch::add_lma_to_userdict(uint16 lma_fr, uint16 lma_to,
   }
 
   assert(spl_id_fr <= kMaxLemmaSize);
-  cout << "  spl_id_fr = " << spl_id_fr << endl;
   return user_dict_->put_lemma(static_cast<char16*>(word_str), spl_ids,
                                  spl_id_fr, 1);
 }
@@ -733,7 +726,6 @@ bool MatrixSearch::try_add_cand0_to_userdict() {
           if (score_to_add > NGram::kMaxScore) {
             score_to_add = NGram::kMaxScore;
           }
-          cout << "1: matrix_[.] = " << spl_start_[lma_start_[pos]] << endl;
           add_lma_to_userdict(lma_id_from, pos, score_to_add);
         }
         lma_id_from = pos;
@@ -754,7 +746,6 @@ bool MatrixSearch::try_add_cand0_to_userdict() {
       float score_to_add =
           mtrx_nd_pool_[matrix_[spl_start_[lma_start_[pos]]]
           .mtrx_nd_pos].score - score_from;
-      cout << "2: matrix_[.] = " << spl_start_[lma_start_[pos]] << endl;
       
       if (modified) {
         score_to_add += 1.0;
@@ -784,8 +775,6 @@ bool MatrixSearch::try_add_cand0_to_userdict() {
 //                sentence contains user lemmas, -> hit, and add occuring count
 //                by 1.
 size_t MatrixSearch::choose(size_t cand_id) {
-  cout << "choose(" << cand_id << ")" << endl;
-  
   if (!inited_ || 0 == pys_decoded_len_)
     return 0;
 
@@ -966,8 +955,6 @@ void MatrixSearch::fill_dmi(DictMatchInfo *dmi, MileStoneHandle *handles,
                             uint16 node_num, unsigned char dict_level,
                             bool splid_end_split, unsigned char splstr_len,
                             unsigned char all_full_id) {
-  cout << "fill_dmi" << endl;
-    
   dmi->dict_handles[0] = handles[0];
   dmi->dict_handles[1] = handles[1];
   dmi->dmi_fr = dmi_fr;
@@ -977,11 +964,6 @@ void MatrixSearch::fill_dmi(DictMatchInfo *dmi, MileStoneHandle *handles,
   dmi->splstr_len = splstr_len;
   dmi->all_full_id = all_full_id;
   dmi->c_phrase = 0;
-  
-  cout << "  dmi.dmi_fr = " << dmi->dmi_fr << endl;
-  cout << "  dmi.spl_id = " << dmi->spl_id << endl;
-  cout << "  dmi.dict_level = " << (unsigned) dmi->dict_level << endl;
-  cout << "  dmi.splstr_len = " << (unsigned) dmi->splstr_len << endl;
 }
 
 bool MatrixSearch::add_char(char ch) {
@@ -991,8 +973,6 @@ bool MatrixSearch::add_char(char ch) {
 }
 
 bool MatrixSearch::add_char_qwerty() {
-  cout << "add_char_qwerty()" << endl;
-
   matrix_[pys_decoded_len_].mtrx_nd_num = 0;
 
   bool spl_matched = false;
@@ -1106,16 +1086,9 @@ bool MatrixSearch::add_char_qwerty() {
         assert(dep_->id_num > 0);
       }
 
-      cout << "  dmi = " << dmi << endl;
-      if (dmi) {
-          cout << "    dmi.dict_level = " << (unsigned) dmi->dict_level << endl;
-      }
-
       uint16 new_dmi_num;
 
       new_dmi_num = extend_dmi(dep_, dmi);
-      cout << "extend_dmi() end" << endl;
-      
       if (new_dmi_num > 0) {
         if (dmi_c_phrase_) {
           dmi_pool_[dmi_pool_used_].c_phrase = 1;
@@ -1127,10 +1100,6 @@ bool MatrixSearch::add_char_qwerty() {
           matrix_[pys_decoded_len_].dmi_has_full_id = 1;
       }
 
-      cout << "  new_dmi_num = " << new_dmi_num << endl;
-      cout << "  pys_decoded_len_ = " << pys_decoded_len_ << endl;
-      cout << "  matrix_[pys_decoded_len_].dmi_num = " << matrix_[pys_decoded_len_].dmi_num << endl;
-      
       // If get candiate lemmas, try to extend the path
       if (lpi_total_ > 0) {
         uint16 fr_row;
@@ -1432,14 +1401,7 @@ size_t MatrixSearch::get_spl_start(const uint16 *&spl_start) {
 }
 
 size_t MatrixSearch::extend_dmi(DictExtPara *dep, DictMatchInfo *dmi_s) {
-  cout << "extend_dmi()" << endl;
-  cout << "  dmi_s = " << dmi_s << endl;
-  if (dmi_s) {
-    cout << "    dmi_s.dict_level = " << (unsigned) dmi_s->dict_level << endl;
-  }
   if (dmi_pool_used_ >= kDmiPoolSize) return 0;
-
-  cout << "  dmi_c_phrase_ = " << dmi_c_phrase_ << endl;
   
   if (dmi_c_phrase_)
     return extend_dmi_c(dep, dmi_s);
@@ -1500,11 +1462,7 @@ size_t MatrixSearch::extend_dmi(DictExtPara *dep, DictMatchInfo *dmi_s) {
     }
   }
 
-  cout << "  handles = " << handles[0] << ", " << handles[1] << endl;
-  
   if (0 != handles[0] || 0 != handles[1]) {
-    cout << "  " << dmi_pool_used_ << " : " << kDmiPoolSize << endl;
-      
     if (dmi_pool_used_ >= kDmiPoolSize) return 0;
 
     DictMatchInfo *dmi_add = dmi_pool_ + dmi_pool_used_;
@@ -1626,8 +1584,6 @@ size_t MatrixSearch::extend_mtrx_nd(MatrixNode *mtrx_nd, LmaPsbItem lpi_items[],
 
 PoolPosType MatrixSearch::match_dmi(size_t step_to, uint16 spl_ids[],
                                     uint16 spl_id_num) {
-  cout << "match_dmi(" << step_to << ", " << spl_id_num << ")" << endl;
-    
   if (pys_decoded_len_ < step_to || 0 == matrix_[step_to].dmi_num) {
     return static_cast<PoolPosType>(-1);
   }
@@ -1648,8 +1604,6 @@ PoolPosType MatrixSearch::match_dmi(size_t step_to, uint16 spl_ids[],
       dmi = dmi_pool_ + dmi->dmi_fr;
     }
     if (matched) {
-      cout << "  dmi.dict_level = "
-           << (unsigned) (dmi_pool_ + matrix_[step_to].dmi_pos + dmi_pos)->dict_level << endl;
       return matrix_[step_to].dmi_pos + dmi_pos;
     }
   }
