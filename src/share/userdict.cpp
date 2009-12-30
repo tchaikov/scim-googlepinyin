@@ -2057,7 +2057,7 @@ LemmaIdType UserDict::_put_lemma(char16 lemma_str[], uint16 splids[],
 #ifdef ___DEBUG_PERF___
   DEBUG_PERF_BEGIN;
 #endif
-  if (is_valid_state() == false)
+  if (!is_valid_state())
     return 0;
   int32 off = locate_in_offsets(lemma_str, splids, lemma_len);
   if (off != -1) {
