@@ -21,6 +21,6 @@ libpinyinime_la_LDFLAGS = -no-undefined -avoid-version \
                           $(LIBTOOL_EXPORT_OPTIONS) \
 			  @LTLIBINTL@
 
-libpinyinime_la_CXXFLAGS = -Werror
+libpinyinime_la_CXXFLAGS = -Wall
 
 libpinyinime_la_LIBADD = -lpthread
