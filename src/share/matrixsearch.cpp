@@ -1589,17 +1589,19 @@ PoolPosType MatrixSearch::match_dmi(size_t step_to, uint16 spl_ids[],
   for (PoolPosType dmi_pos = 0; dmi_pos < matrix_[step_to].dmi_num; dmi_pos++) {
     DictMatchInfo *dmi = dmi_pool_ + matrix_[step_to].dmi_pos + dmi_pos;
 
-    if (dmi->dict_level != spl_id_num)
+    if (dmi->dict_level != spl_id_num && matrix_[step_to].dmi_num > 1)
       continue;
 
     bool matched = true;
-    for (uint16 spl_pos = 0; spl_pos < spl_id_num; spl_pos++) {
+    for (uint16 spl_pos = 0; spl_pos < dmi->dict_level; spl_pos++) {
       if (spl_ids[spl_id_num - spl_pos - 1] != dmi->spl_id) {
         matched = false;
         break;
       }
 
-      dmi = dmi_pool_ + dmi->dmi_fr;
+      if (dmi->dmi_fr != (PoolPosType)~0)
+       dmi = dmi_pool_ + dmi->dmi_fr;
+
     }
     if (matched) {
       return matrix_[step_to].dmi_pos + dmi_pos;
