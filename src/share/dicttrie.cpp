@@ -61,9 +61,9 @@ void DictTrie::free_resource(bool free_dict_list) {
     free(nodes_ge1_);
   nodes_ge1_ = NULL;
 
-  if (NULL != nodes_ge1_)
-    free(nodes_ge1_);
-  nodes_ge1_ = NULL;
+  if (NULL != lma_idx_buf_)
+    free(lma_idx_buf_);
+  lma_idx_buf_ = NULL;
 
   if (free_dict_list) {
     if (NULL != dict_list_) {
